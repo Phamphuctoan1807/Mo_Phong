@@ -93,6 +93,59 @@ document.addEventListener("DOMContentLoaded", () => {
     let bigDataSteps = 0;
 
     // --------------------------------------------------------------------------
+    // TAB 3: SO SÁNH THUẬT TOÁN (DOM REFERENCES & STATE)
+    // --------------------------------------------------------------------------
+    const compareArrayInput = document.getElementById("compareArrayInput");
+    const comparePresetButtons = document.querySelectorAll(".compare-preset-btn");
+    const btnComparePlay = document.getElementById("btnComparePlay");
+    const comparePlayIcon = document.getElementById("comparePlayIcon");
+    const comparePlayText = document.getElementById("comparePlayText");
+    const btnCompareStep = document.getElementById("btnCompareStep");
+    const btnCompareReset = document.getElementById("btnCompareReset");
+    const compareSpeedSlider = document.getElementById("compareSpeedSlider");
+    const compareBatchSelect = document.getElementById("compareBatchSelect");
+
+    const compareAlgoA = document.getElementById("compareAlgoA");
+    const fighterStatusA = document.getElementById("fighterStatusA");
+    const fighterCompA = document.getElementById("fighterCompA");
+    const fighterSwapA = document.getElementById("fighterSwapA");
+    const fighterStepA = document.getElementById("fighterStepA");
+    const fighterTimeA = document.getElementById("fighterTimeA");
+    const compareBarsA = document.getElementById("compareBarsA");
+    const fighterExplainA = document.getElementById("fighterExplainA");
+
+    const compareAlgoB = document.getElementById("compareAlgoB");
+    const fighterStatusB = document.getElementById("fighterStatusB");
+    const fighterCompB = document.getElementById("fighterCompB");
+    const fighterSwapB = document.getElementById("fighterSwapB");
+    const fighterStepB = document.getElementById("fighterStepB");
+    const fighterTimeB = document.getElementById("fighterTimeB");
+    const compareBarsB = document.getElementById("compareBarsB");
+    const fighterExplainB = document.getElementById("fighterExplainB");
+
+    const compareSummarySection = document.getElementById("compareSummarySection");
+    const winnerAnnouncement = document.getElementById("winnerAnnouncement");
+    const thAlgoA = document.getElementById("thAlgoA");
+    const thAlgoB = document.getElementById("thAlgoB");
+    const compareSummaryTableBody = document.getElementById("compareSummaryTableBody");
+    const conclusionBody = document.getElementById("conclusionBody");
+
+    // Comparison State
+    let initialCompareArray = [];
+    let compareArrayA = [];
+    let compareArrayB = [];
+    let genA = null;
+    let genB = null;
+    let isComparePlaying = false;
+    let compareTimerId = null;
+    let doneA = false;
+    let doneB = false;
+    let compCountA = 0, swapCountA = 0, stepCountA = 0, timeCountA = 0;
+    let compCountB = 0, swapCountB = 0, stepCountB = 0, timeCountB = 0;
+    let compareStartTime = 0;
+    let hasAnnouncedWinner = false;
+
+    // --------------------------------------------------------------------------
     // 1. INPUT PARSER (Hỗ trợ số âm, số thực, không giới hạn phần tử)
     // --------------------------------------------------------------------------
     function parseInputArray() {
@@ -1297,9 +1350,733 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // --------------------------------------------------------------------------
+    // 9. TAB 3: ĐẤU TRƯỜNG SO SÁNH THUẬT TOÁN (HEAD-TO-HEAD ARENA)
+    // --------------------------------------------------------------------------
+    const COMPARE_PRESETS = {
+        random_16: () => {
+            const arr = [];
+            for (let i = 0; i < 16; i++) arr.push(Math.floor(Math.random() * 160 - 50));
+            return arr.join(", ");
+        },
+        random_35: () => {
+            const arr = [];
+            for (let i = 0; i < 35; i++) arr.push(Math.floor(Math.random() * 200 - 80));
+            return arr.join(", ");
+        },
+        random_70: () => {
+            const arr = [];
+            for (let i = 0; i < 70; i++) arr.push(Math.floor(Math.random() * 300 - 120));
+            return arr.join(", ");
+        },
+        reversed: "92, 80, 68, 55, 42, 30, 18, 5, -8, -20, -35, -48, -60",
+        nearly_sorted: "-35, -20, -8, 2, 14, 25, 20, 36, 48, 60, 56, 75, 88",
+        duplicates: "25, -12, 40, 25, -12, 50, 25, -12, 40, 50, -12, 25, 40",
+        neg_float: "-18.5, 45, -7.2, 0, 82.4, -12, 29.5, 8.8, -30, 64, 15, -4.5"
+    };
+
+    function parseCompareArrayInput() {
+        const raw = compareArrayInput ? compareArrayInput.value.trim() : "";
+        if (!raw) {
+            return [28, -14, 55, 0, -8.5, 42, 19, -32, 70, 5, -18, 63, 12, -3];
+        }
+        const tokens = raw.split(/[\s,;]+/);
+        const parsed = [];
+        for (const token of tokens) {
+            if (token === "") continue;
+            const num = parseFloat(token);
+            if (!isNaN(num)) {
+                parsed.push(Number.isInteger(num) ? num : parseFloat(num.toFixed(2)));
+            }
+        }
+        return parsed.length > 0 ? parsed : [20, -10, 35, 5, -15, 40];
+    }
+
+    function populateCompareAlgoSelects() {
+        if (!compareAlgoA || !compareAlgoB) return;
+        compareAlgoA.innerHTML = "";
+        compareAlgoB.innerHTML = "";
+
+        const preferredOrder = [
+            "intro_sort", "quick_sort", "merge_sort", "heap_sort", "tim_sort",
+            "radix_sort", "counting_sort", "shell_sort", "bitonic_sort",
+            "comb_sort", "bucket_sort", "odd_even_sort", "cycle_sort", "pancake_sort",
+            "insertion_sort", "binary_insertion_sort", "selection_sort", "gnome_sort",
+            "cocktail_sort", "bubble_sort", "stooge_sort", "bogo_sort"
+        ];
+
+        preferredOrder.forEach(key => {
+            const algo = ALGORITHMS[key];
+            if (!algo) return;
+
+            const optA = document.createElement("option");
+            optA.value = key;
+            optA.textContent = `${algo.name} (${algo.complexity.avg})`;
+            if (key === "quick_sort") optA.selected = true;
+            compareAlgoA.appendChild(optA);
+
+            const optB = document.createElement("option");
+            optB.value = key;
+            optB.textContent = `${algo.name} (${algo.complexity.avg})`;
+            if (key === "bubble_sort") optB.selected = true;
+            compareAlgoB.appendChild(optB);
+        });
+    }
+
+    function renderCompareBars(container, arr, activeIndices = [], type = "default") {
+        if (!container || !arr || arr.length === 0) return;
+        container.innerHTML = "";
+
+        const minVal = Math.min(...arr);
+        const maxVal = Math.max(...arr);
+        const hasNegative = minVal < 0;
+        const hasPositive = maxVal > 0;
+
+        let zeroPercent = 0;
+        let range = 1;
+
+        if (hasNegative && hasPositive) {
+            range = maxVal - minVal || 1;
+            zeroPercent = (Math.abs(minVal) / range) * 100;
+        } else if (hasNegative) {
+            range = Math.abs(minVal) || 1;
+            zeroPercent = 100;
+        } else {
+            range = maxVal || 1;
+            zeroPercent = 0;
+        }
+
+        const zeroAxis = document.createElement("div");
+        zeroAxis.className = "zero-axis-line";
+        zeroAxis.style.bottom = `${zeroPercent}%`;
+        const zeroLabel = document.createElement("span");
+        zeroLabel.className = "zero-axis-label";
+        zeroLabel.textContent = "0";
+        zeroAxis.appendChild(zeroLabel);
+        container.appendChild(zeroAxis);
+
+        const totalElements = arr.length;
+        const hideLabels = totalElements > 25;
+
+        arr.forEach((val, idx) => {
+            const col = document.createElement("div");
+            col.className = "bar-col";
+            col.dataset.index = idx;
+
+            if (activeIndices.includes(idx)) {
+                if (type === "compare") col.classList.add("comparing");
+                else if (type === "swap") col.classList.add("swapping");
+                else if (type === "pivot") col.classList.add("pivot");
+                else if (type === "sorted") col.classList.add("sorted");
+            }
+
+            const barBody = document.createElement("div");
+            barBody.className = "bar-body";
+
+            let barHeightPercent = 0;
+            if (hasNegative && hasPositive) {
+                barHeightPercent = Math.max(3, (Math.abs(val) / range) * 90);
+                if (val >= 0) {
+                    barBody.classList.add("bar-positive");
+                    barBody.style.bottom = `${zeroPercent}%`;
+                    barBody.style.height = `${barHeightPercent}%`;
+                } else {
+                    barBody.classList.add("bar-negative");
+                    barBody.style.top = `${100 - zeroPercent}%`;
+                    barBody.style.height = `${barHeightPercent}%`;
+                }
+            } else if (hasNegative) {
+                barHeightPercent = Math.max(3, (Math.abs(val) / range) * 90);
+                barBody.classList.add("bar-negative");
+                barBody.style.top = `0%`;
+                barBody.style.height = `${barHeightPercent}%`;
+            } else {
+                barHeightPercent = Math.max(3, (val / range) * 90);
+                barBody.classList.add("bar-positive");
+                barBody.style.bottom = `0%`;
+                barBody.style.height = `${barHeightPercent}%`;
+            }
+
+            col.appendChild(barBody);
+
+            if (!hideLabels) {
+                const label = document.createElement("span");
+                label.className = "bar-val-label";
+                label.textContent = val;
+                if (val >= 0) {
+                    label.style.bottom = `calc(${zeroPercent}% + ${barHeightPercent}% + 3px)`;
+                } else {
+                    label.style.top = `calc(${100 - zeroPercent}% + ${barHeightPercent}% + 3px)`;
+                }
+                col.appendChild(label);
+            }
+
+            container.appendChild(col);
+        });
+    }
+
+    function resetCompareSimulation(shouldPause = true) {
+        if (shouldPause) {
+            pauseCompareSimulation();
+        }
+
+        initialCompareArray = parseCompareArrayInput();
+        compareArrayA = [...initialCompareArray];
+        compareArrayB = [...initialCompareArray];
+
+        const idA = compareAlgoA ? compareAlgoA.value : "quick_sort";
+        const idB = compareAlgoB ? compareAlgoB.value : "bubble_sort";
+
+        const algoA = ALGORITHMS[idA];
+        const algoB = ALGORITHMS[idB];
+
+        genA = algoA ? algoA.generator(compareArrayA) : null;
+        genB = algoB ? algoB.generator(compareArrayB) : null;
+
+        doneA = false;
+        doneB = false;
+        compCountA = 0; swapCountA = 0; stepCountA = 0; timeCountA = 0;
+        compCountB = 0; swapCountB = 0; stepCountB = 0; timeCountB = 0;
+        compareStartTime = 0;
+        hasAnnouncedWinner = false;
+
+        if (fighterCompA) fighterCompA.textContent = "0";
+        if (fighterSwapA) fighterSwapA.textContent = "0";
+        if (fighterStepA) fighterStepA.textContent = "0";
+        if (fighterTimeA) fighterTimeA.textContent = "0.0 ms";
+        if (fighterStatusA) {
+            fighterStatusA.className = "fighter-status-badge ready";
+            fighterStatusA.textContent = "Sẵn sàng";
+        }
+        if (fighterExplainA) fighterExplainA.textContent = "Chờ lệnh bắt đầu cuộc so tài...";
+
+        if (fighterCompB) fighterCompB.textContent = "0";
+        if (fighterSwapB) fighterSwapB.textContent = "0";
+        if (fighterStepB) fighterStepB.textContent = "0";
+        if (fighterTimeB) fighterTimeB.textContent = "0.0 ms";
+        if (fighterStatusB) {
+            fighterStatusB.className = "fighter-status-badge ready";
+            fighterStatusB.textContent = "Sẵn sàng";
+        }
+        if (fighterExplainB) fighterExplainB.textContent = "Chờ lệnh bắt đầu cuộc so tài...";
+
+        if (compareSummarySection) {
+            compareSummarySection.style.display = "none";
+        }
+
+        renderCompareBars(compareBarsA, compareArrayA);
+        renderCompareBars(compareBarsB, compareArrayB);
+    }
+
+    function stepCompareSimulation() {
+        if (!genA || !genB) {
+            resetCompareSimulation(false);
+        }
+
+        if (doneA && doneB) {
+            return false;
+        }
+
+        if (compareStartTime === 0) {
+            compareStartTime = performance.now();
+        }
+
+        // Bước tiếp cho Đấu thủ A
+        if (!doneA && genA) {
+            const nextA = genA.next();
+            if (nextA.done) {
+                doneA = true;
+                if (timeCountA === 0) {
+                    timeCountA = Math.max(1, performance.now() - compareStartTime);
+                }
+                fighterTimeA.textContent = `${timeCountA.toFixed(1)} ms`;
+                renderCompareBars(compareBarsA, compareArrayA, compareArrayA.map((_, i) => i), "sorted");
+                fighterExplainA.textContent = `🎉 Hoàn thành sắp xếp! (${timeCountA.toFixed(1)} ms)`;
+
+                if (!doneB && !hasAnnouncedWinner) {
+                    hasAnnouncedWinner = true;
+                    fighterStatusA.className = "fighter-status-badge winner";
+                    fighterStatusA.textContent = `🥇 Về đích trước (${timeCountA.toFixed(1)} ms)!`;
+                } else {
+                    fighterStatusA.className = "fighter-status-badge finished";
+                    fighterStatusA.textContent = `Hoàn thành (${timeCountA.toFixed(1)} ms)`;
+                }
+            } else {
+                const step = nextA.value;
+                stepCountA++;
+                fighterStepA.textContent = stepCountA;
+                if (step.type === "compare") {
+                    compCountA++;
+                    fighterCompA.textContent = compCountA;
+                } else if (step.type === "swap") {
+                    swapCountA++;
+                    fighterSwapA.textContent = swapCountA;
+                }
+                if (step.array) {
+                    compareArrayA = [...step.array];
+                }
+                timeCountA = performance.now() - compareStartTime;
+                fighterTimeA.textContent = `${timeCountA.toFixed(1)} ms`;
+                renderCompareBars(compareBarsA, compareArrayA, step.indices || [], step.type || "default");
+                if (step.explanation) {
+                    fighterExplainA.textContent = step.explanation;
+                }
+            }
+        }
+
+        // Bước tiếp cho Đấu thủ B
+        if (!doneB && genB) {
+            const nextB = genB.next();
+            if (nextB.done) {
+                doneB = true;
+                if (timeCountB === 0) {
+                    timeCountB = Math.max(1, performance.now() - compareStartTime);
+                }
+                fighterTimeB.textContent = `${timeCountB.toFixed(1)} ms`;
+                renderCompareBars(compareBarsB, compareArrayB, compareArrayB.map((_, i) => i), "sorted");
+                fighterExplainB.textContent = `🎉 Hoàn thành sắp xếp! (${timeCountB.toFixed(1)} ms)`;
+
+                if (!doneA && !hasAnnouncedWinner) {
+                    hasAnnouncedWinner = true;
+                    fighterStatusB.className = "fighter-status-badge winner";
+                    fighterStatusB.textContent = `🥇 Về đích trước (${timeCountB.toFixed(1)} ms)!`;
+                } else {
+                    fighterStatusB.className = "fighter-status-badge finished";
+                    fighterStatusB.textContent = `Hoàn thành (${timeCountB.toFixed(1)} ms)`;
+                }
+            } else {
+                const step = nextB.value;
+                stepCountB++;
+                fighterStepB.textContent = stepCountB;
+                if (step.type === "compare") {
+                    compCountB++;
+                    fighterCompB.textContent = compCountB;
+                } else if (step.type === "swap") {
+                    swapCountB++;
+                    fighterSwapB.textContent = swapCountB;
+                }
+                if (step.array) {
+                    compareArrayB = [...step.array];
+                }
+                timeCountB = performance.now() - compareStartTime;
+                fighterTimeB.textContent = `${timeCountB.toFixed(1)} ms`;
+                renderCompareBars(compareBarsB, compareArrayB, step.indices || [], step.type || "default");
+                if (step.explanation) {
+                    fighterExplainB.textContent = step.explanation;
+                }
+            }
+        }
+
+        // Kiểm tra xem cả hai đã xong chưa
+        if (doneA && doneB) {
+            pauseCompareSimulation();
+            showComparisonSummary();
+            return false;
+        }
+
+        return true;
+    }
+
+    function getCompareDelay() {
+        const val = compareSpeedSlider ? parseInt(compareSpeedSlider.value, 10) : 820;
+        return 1020 - val;
+    }
+
+    function playCompareSimulation() {
+        if (!genA || !genB || (doneA && doneB)) {
+            resetCompareSimulation(false);
+        }
+        if (isComparePlaying) return;
+        isComparePlaying = true;
+        if (compareStartTime === 0) {
+            compareStartTime = performance.now();
+        }
+
+        comparePlayIcon.textContent = "⏸";
+        comparePlayText.textContent = "Tạm dừng";
+        btnComparePlay.classList.remove("btn-primary");
+        btnComparePlay.classList.add("btn-secondary");
+
+        if (!doneA) {
+            fighterStatusA.className = "fighter-status-badge running";
+            fighterStatusA.textContent = "⚡ Đang chạy...";
+        }
+        if (!doneB) {
+            fighterStatusB.className = "fighter-status-badge running";
+            fighterStatusB.textContent = "⚡ Đang chạy...";
+        }
+
+        function loop() {
+            if (!isComparePlaying) return;
+
+            const batch = compareBatchSelect ? parseInt(compareBatchSelect.value, 10) : 1;
+            let hasMore = true;
+            for (let i = 0; i < batch; i++) {
+                hasMore = stepCompareSimulation();
+                if (!hasMore) break;
+            }
+
+            if (hasMore && isComparePlaying) {
+                compareTimerId = setTimeout(loop, getCompareDelay());
+            } else {
+                pauseCompareSimulation();
+            }
+        }
+        loop();
+    }
+
+    function pauseCompareSimulation() {
+        isComparePlaying = false;
+        if (compareTimerId) {
+            clearTimeout(compareTimerId);
+            compareTimerId = null;
+        }
+        if (comparePlayIcon) comparePlayIcon.textContent = "▶";
+        if (comparePlayText) comparePlayText.textContent = "Bắt đầu so tài song song";
+        if (btnComparePlay) {
+            btnComparePlay.classList.remove("btn-secondary");
+            btnComparePlay.classList.add("btn-primary");
+        }
+
+        if (!doneA && fighterStatusA && fighterStatusA.textContent.includes("Đang chạy")) {
+            fighterStatusA.className = "fighter-status-badge ready";
+            fighterStatusA.textContent = "Tạm dừng";
+        }
+        if (!doneB && fighterStatusB && fighterStatusB.textContent.includes("Đang chạy")) {
+            fighterStatusB.className = "fighter-status-badge ready";
+            fighterStatusB.textContent = "Tạm dừng";
+        }
+    }
+
+    function generateConclusionReport(algoA, algoB, metrics) {
+        const {
+            winner,
+            timeA, timeB,
+            compA, compB,
+            swapA, swapB,
+            stepA, stepB,
+            stepPct, stepRatio,
+            compPct, compRatio,
+            swapPct, swapRatio,
+            timeRatio
+        } = metrics;
+
+        let html = "";
+
+        // 1. Nhận định kết quả tổng quan
+        if (winner === "A") {
+            html += `<p>🏆 <strong>Kết quả chung cuộc:</strong> Thuật toán <strong>${algoA.name}</strong> đã giành chiến thắng thuyết phục trước <strong>${algoB.name}</strong>. Cụ thể, ${algoA.name} về đích với thời gian <strong>${timeA.toFixed(1)} ms</strong> (nhanh hơn gấp <strong>${timeRatio}x</strong>), thực hiện <strong>${stepA}</strong> bước so với <strong>${stepB}</strong> bước của ${algoB.name} (tiết kiệm <strong>${stepPct}%</strong> tổng số thao tác).</p>`;
+        } else if (winner === "B") {
+            html += `<p>🏆 <strong>Kết quả chung cuộc:</strong> Thuật toán <strong>${algoB.name}</strong> đã giành chiến thắng thuyết phục trước <strong>${algoA.name}</strong>. Cụ thể, ${algoB.name} về đích với thời gian <strong>${timeB.toFixed(1)} ms</strong> (nhanh hơn gấp <strong>${timeRatio}x</strong>), thực hiện <strong>${stepB}</strong> bước so với <strong>${stepA}</strong> bước của ${algoA.name} (tiết kiệm <strong>${stepPct}%</strong> tổng số thao tác).</p>`;
+        } else {
+            html += `<p>🤝 <strong>Kết quả chung cuộc:</strong> Cả <strong>${algoA.name}</strong> và <strong>${algoB.name}</strong> đều có hiệu năng tương đương nhau trên bộ dữ liệu kiểm thử này, chênh lệch số bước không đáng kể.</p>`;
+        }
+
+        // 2. Phân tích độ phức tạp thời gian & bản chất thuật toán
+        html += `<h5>1. Về độ phức tạp thời gian (Time Complexity):</h5><ul>`;
+        html += `<li><strong>${algoA.name}:</strong> Trung bình <code>${algoA.complexity.avg}</code>, Tốt nhất <code>${algoA.complexity.best}</code>, Xấu nhất <code>${algoA.complexity.worst}</code>.</li>`;
+        html += `<li><strong>${algoB.name}:</strong> Trung bình <code>${algoB.complexity.avg}</code>, Tốt nhất <code>${algoB.complexity.best}</code>, Xấu nhất <code>${algoB.complexity.worst}</code>.</li>`;
+
+        const isANLogN = algoA.complexity.avg.includes("log");
+        const isBNLogN = algoB.complexity.avg.includes("log");
+        const isAN2 = algoA.complexity.avg.includes("n²") || algoA.complexity.avg.includes("N²");
+        const isBN2 = algoB.complexity.avg.includes("n²") || algoB.complexity.avg.includes("N²");
+
+        if (isANLogN && isBN2) {
+            html += `<li><strong>Phân tích khoa học:</strong> ${algoA.name} sử dụng cơ chế phân hoạch chia để trị hoặc cây nhị phân đạt tiệm cận O(N log N). Trong khi đó, ${algoB.name} mang độ phức tạp bậc hai O(N²), số phép so sánh tăng theo cấp số nhân khiến số phép tính bùng nổ khi kích thước dãy tăng lên.</li>`;
+        } else if (isBNLogN && isAN2) {
+            html += `<li><strong>Phân tích khoa học:</strong> ${algoB.name} áp dụng kỹ thuật tiệm cận O(N log N) giúp giải quyết bài toán nhanh hơn gấp bội so với cấu trúc vòng lặp lồng nhau O(N²) của ${algoA.name}.</li>`;
+        } else if (isANLogN && isBNLogN) {
+            html += `<li><strong>Phân tích khoa học:</strong> Cả hai đều thuộc nhóm thuật toán tối ưu tiệm cận O(N log N). Chênh lệch thực tế đến từ <em>hằng số ẩn (hidden constant factor)</em>, tối ưu phân hoạch trên bộ nhớ đệm CPU (Cache Locality), và chiến lược chọn pivot hoặc chia run.</li>`;
+        } else {
+            html += `<li><strong>Phân tích khoa học:</strong> Cả hai đều thuộc nhóm thuật toán cơ bản, hiệu năng thực tế phụ thuộc mật thiết vào thứ tự ngẫu nhiên ban đầu của dữ liệu và chi phí thực hiện mỗi bước hoán đổi.</li>`;
+        }
+        html += `</ul>`;
+
+        // 3. Phân tích chi phí thao tác: So sánh vs Hoán đổi
+        html += `<h5>2. Về chi phí so sánh & hoán đổi (Comparisons vs Swaps):</h5><ul>`;
+        html += `<li><strong>Số phép so sánh:</strong> ${algoA.name} thực hiện <strong>${compA}</strong> lần | ${algoB.name} thực hiện <strong>${compB}</strong> lần.</li>`;
+        html += `<li><strong>Số lần đổi chỗ (Writes / Swaps):</strong> ${algoA.name} thực hiện <strong>${swapA}</strong> lần | ${algoB.name} thực hiện <strong>${swapB}</strong> lần.</li>`;
+        if (swapA < swapB && compA >= compB) {
+            html += `<li><em>Nhận xét:</em> ${algoA.name} chấp nhận so sánh nhiều hơn để giảm thiểu số lần ghi/đổi chỗ trên bộ nhớ, rất phù hợp cho bộ nhớ Flash hoặc EEPROM có giới hạn số lần ghi (Write Cycles).</li>`;
+        } else if (swapB < swapA && compB >= compA) {
+            html += `<li><em>Nhận xét:</em> ${algoB.name} tối ưu số lần ghi/đổi chỗ trên bộ nhớ, giúp bảo vệ tuổi thọ các thiết bị lưu trữ Flash/SSD.</li>`;
+        }
+        html += `</ul>`;
+
+        // 4. Đánh đổi tài nguyên bộ nhớ (Space Complexity) & Độ ổn định (Stability)
+        html += `<h5>3. Về bộ nhớ RAM & Tính ổn định:</h5><ul>`;
+        html += `<li><strong>Bộ nhớ phụ:</strong> ${algoA.name} tốn <code>${algoA.complexity.space}</code> RAM | ${algoB.name} tốn <code>${algoB.complexity.space}</code> RAM.</li>`;
+        html += `<li><strong>Tính ổn định:</strong> ${algoA.name} (<strong>${algoA.complexity.stable}</strong>) | ${algoB.name} (<strong>${algoB.complexity.stable}</strong>).</li>`;
+        html += `</ul>`;
+
+        // 5. Khuyến nghị thực tế
+        html += `<h5>💡 Khuyến nghị ứng dụng thực tế:</h5><ul>`;
+        if (algoA.id === "intro_sort" || algoB.id === "intro_sort") {
+            html += `<li><strong>IntroSort:</strong> Là sự lựa chọn mặc định của thư viện chuẩn C++ <code>std::sort</code>. Tốc độ cực nhanh như QuickSort nhưng đảm bảo không bao giờ bị rơi vào trường hợp xấu nhất O(N²) nhờ cơ chế tự chuyển sang HeapSort.</li>`;
+        }
+        if (algoA.id === "tim_sort" || algoB.id === "tim_sort") {
+            html += `<li><strong>TimSort:</strong> Thuật toán chuẩn trong Python (<code>list.sort()</code>) và Java (<code>Arrays.sort()</code>). Cực kỳ ổn định và đạt tốc độ không tưởng O(N) khi dữ liệu trong thực tế đã có sẵn các chuỗi tăng/giảm một phần.</li>`;
+        }
+        if (algoA.id === "quick_sort" || algoB.id === "quick_sort") {
+            html += `<li><strong>QuickSort:</strong> Lựa chọn hàng đầu cho dữ liệu mảng nguyên thủy (primitive arrays) khi cần tốc độ tối đa và dung lượng RAM khiêm tốn O(log N).</li>`;
+        }
+        if (algoA.id === "merge_sort" || algoB.id === "merge_sort") {
+            html += `<li><strong>MergeSort:</strong> Cần thiết khi bắt buộc phải bảo toàn tính ổn định (Stable) hoặc sắp xếp danh sách liên kết (Linked List), xử lý dữ liệu lớn ngoài đĩa cứng (External Sorting).</li>`;
+        }
+        if (algoA.id === "heap_sort" || algoB.id === "heap_sort") {
+            html += `<li><strong>HeapSort:</strong> Tuyệt vời cho các hệ thống nhúng, vi điều khiển (IoT) hoặc hệ điều hành thời gian thực (RTOS) nơi bộ nhớ RAM cực kỳ quý giá và cần đảm bảo trần thời gian O(N log N) tuyệt đối.</li>`;
+        }
+        html += `</ul>`;
+
+        return html;
+    }
+
+    function showComparisonSummary() {
+        if (!compareSummarySection) return;
+
+        const idA = compareAlgoA ? compareAlgoA.value : "quick_sort";
+        const idB = compareAlgoB ? compareAlgoB.value : "bubble_sort";
+        const algoA = ALGORITHMS[idA];
+        const algoB = ALGORITHMS[idB];
+        if (!algoA || !algoB) return;
+
+        compareSummarySection.style.display = "block";
+        if (thAlgoA) thAlgoA.textContent = algoA.name;
+        if (thAlgoB) thAlgoB.textContent = algoB.name;
+
+        // Xác định bên thắng dựa trên thời gian và tổng số bước
+        let winner = "tie";
+        if (stepCountA < stepCountB) winner = "A";
+        else if (stepCountB < stepCountA) winner = "B";
+
+        const maxSteps = Math.max(stepCountA, stepCountB) || 1;
+        const minSteps = Math.min(stepCountA, stepCountB) || 1;
+        const stepDiff = Math.abs(stepCountA - stepCountB);
+        const stepPct = ((stepDiff / maxSteps) * 100).toFixed(1);
+        const stepRatio = (maxSteps / minSteps).toFixed(1);
+
+        const maxComp = Math.max(compCountA, compCountB) || 1;
+        const minComp = Math.min(compCountA, compCountB) || 1;
+        const compDiff = Math.abs(compCountA - compCountB);
+        const compPct = ((compDiff / maxComp) * 100).toFixed(1);
+        const compRatio = (maxComp / minComp).toFixed(1);
+
+        const maxSwap = Math.max(swapCountA, swapCountB) || 1;
+        const minSwap = Math.min(swapCountA, swapCountB) || 1;
+        const swapDiff = Math.abs(swapCountA - swapCountB);
+        const swapPct = ((swapDiff / maxSwap) * 100).toFixed(1);
+        const swapRatio = (maxSwap / minSwap).toFixed(1);
+
+        const maxTime = Math.max(timeCountA, timeCountB) || 1;
+        const minTime = Math.min(timeCountA, timeCountB) || 1;
+        const timeRatio = (maxTime / minTime).toFixed(1);
+
+        // Hiển thị Winner Announcement banner
+        if (winner === "A") {
+            winnerAnnouncement.innerHTML = `
+                <span class="winner-icon">🏆</span>
+                <div>
+                    <div>CHIẾN THẮNG TUYỆT ĐỐI: <span style="color:#7ee787;">${algoA.name}</span></div>
+                    <div style="font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); margin-top: 4px;">
+                        Về đích trước với ${timeCountA.toFixed(1)} ms &bull; Nhanh gấp <strong>${stepRatio}x</strong> về số bước thao tác so với ${algoB.name} (tiết kiệm ${stepPct}%).
+                    </div>
+                </div>
+            `;
+        } else if (winner === "B") {
+            winnerAnnouncement.innerHTML = `
+                <span class="winner-icon">🏆</span>
+                <div>
+                    <div>CHIẾN THẮNG TUYỆT ĐỐI: <span style="color:#7ee787;">${algoB.name}</span></div>
+                    <div style="font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); margin-top: 4px;">
+                        Về đích trước với ${timeCountB.toFixed(1)} ms &bull; Nhanh gấp <strong>${stepRatio}x</strong> về số bước thao tác so với ${algoA.name} (tiết kiệm ${stepPct}%).
+                    </div>
+                </div>
+            `;
+        } else {
+            winnerAnnouncement.innerHTML = `
+                <span class="winner-icon">🤝</span>
+                <div>
+                    <div>KẾT QUẢ: <span style="color:var(--accent-cyan);">HÒA NHAU</span></div>
+                    <div style="font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); margin-top: 4px;">
+                        Cả hai thuật toán có tổng số bước và hiệu năng gần như tương đương trên tập dữ liệu này.
+                    </div>
+                </div>
+            `;
+        }
+
+        // Tạo các hàng trong bảng so sánh
+        const rows = [
+            {
+                metric: "Thời gian hoàn thành (ms)",
+                valA: `${timeCountA.toFixed(1)} ms`,
+                valB: `${timeCountB.toFixed(1)} ms`,
+                win: timeCountA < timeCountB ? "A" : (timeCountB < timeCountA ? "B" : "none"),
+                diff: timeRatio > 1.05 ? (timeCountA < timeCountB ? `A nhanh gấp ${timeRatio}x` : `B nhanh gấp ${timeRatio}x`) : "Tương đương"
+            },
+            {
+                metric: "Tổng số bước thực thi",
+                valA: stepCountA,
+                valB: stepCountB,
+                win: stepCountA < stepCountB ? "A" : (stepCountB < stepCountA ? "B" : "none"),
+                diff: stepRatio > 1.05 ? (stepCountA < stepCountB ? `A ít hơn ${stepPct}% (${stepRatio}x)` : `B ít hơn ${stepPct}% (${stepRatio}x)`) : "Ngang nhau"
+            },
+            {
+                metric: "Số phép so sánh",
+                valA: compCountA,
+                valB: compCountB,
+                win: compCountA < compCountB ? "A" : (compCountB < compCountA ? "B" : "none"),
+                diff: compRatio > 1.05 ? (compCountA < compCountB ? `A ít hơn ${compPct}%` : `B ít hơn ${compPct}%`) : "Ngang nhau"
+            },
+            {
+                metric: "Số lần đổi chỗ / ghi nhớ",
+                valA: swapCountA,
+                valB: swapCountB,
+                win: swapCountA < swapCountB ? "A" : (swapCountB < swapCountA ? "B" : "none"),
+                diff: swapRatio > 1.05 ? (swapCountA < swapCountB ? `A ít hơn ${swapPct}%` : `B ít hơn ${swapPct}%`) : "Ngang nhau"
+            },
+            {
+                metric: "Độ phức tạp Thời gian (Trung bình)",
+                valA: algoA.complexity.avg,
+                valB: algoB.complexity.avg,
+                win: "none",
+                diff: "Lý thuyết giải thuật"
+            },
+            {
+                metric: "Độ phức tạp Thời gian (Tốt nhất)",
+                valA: algoA.complexity.best,
+                valB: algoB.complexity.best,
+                win: "none",
+                diff: "Khi dữ liệu lý tưởng"
+            },
+            {
+                metric: "Độ phức tạp Thời gian (Xấu nhất)",
+                valA: algoA.complexity.worst,
+                valB: algoB.complexity.worst,
+                win: "none",
+                diff: "Trường hợp xấu nhất"
+            },
+            {
+                metric: "Bộ nhớ phụ (RAM Space)",
+                valA: algoA.complexity.space,
+                valB: algoB.complexity.space,
+                win: algoA.complexity.space === "O(1)" && algoB.complexity.space !== "O(1)" ? "A" : (algoB.complexity.space === "O(1)" && algoA.complexity.space !== "O(1)" ? "B" : "none"),
+                diff: "Chi phí bộ nhớ RAM"
+            },
+            {
+                metric: "Tính ổn định (Stable)",
+                valA: algoA.complexity.stable,
+                valB: algoB.complexity.stable,
+                win: algoA.complexity.stable === "Có" && algoB.complexity.stable !== "Có" ? "A" : (algoB.complexity.stable === "Có" && algoA.complexity.stable !== "Có" ? "B" : "none"),
+                diff: "Bảo toàn thứ tự bằng nhau"
+            }
+        ];
+
+        compareSummaryTableBody.innerHTML = "";
+        rows.forEach(r => {
+            const tr = document.createElement("tr");
+
+            const tdMetric = document.createElement("td");
+            tdMetric.innerHTML = `<strong>${r.metric}</strong>`;
+
+            const tdA = document.createElement("td");
+            tdA.innerHTML = r.win === "A" ? `<span class="winner-cell">${r.valA}</span> <span class="winner-pill">Tốt hơn</span>` : `${r.valA}`;
+
+            const tdB = document.createElement("td");
+            tdB.innerHTML = r.win === "B" ? `<span class="winner-cell">${r.valB}</span> <span class="winner-pill">Tốt hơn</span>` : `${r.valB}`;
+
+            const tdDiff = document.createElement("td");
+            const diffClass = r.diff.includes("nhanh hơn") || r.diff.includes("ít hơn") ? "diff-better" : "diff-equal";
+            tdDiff.innerHTML = `<span class="diff-badge ${diffClass}">${r.diff}</span>`;
+
+            tr.appendChild(tdMetric);
+            tr.appendChild(tdA);
+            tr.appendChild(tdB);
+            tr.appendChild(tdDiff);
+            compareSummaryTableBody.appendChild(tr);
+        });
+
+        // Tạo nội dung kết luận khoa học
+        const metrics = {
+            winner,
+            timeA: timeCountA,
+            timeB: timeCountB,
+            compA: compCountA,
+            compB: compCountB,
+            swapA: swapCountA,
+            swapB: swapCountB,
+            stepA: stepCountA,
+            stepB: stepCountB,
+            stepPct, stepRatio,
+            compPct, compRatio,
+            swapPct, swapRatio,
+            timeRatio
+        };
+
+        conclusionBody.innerHTML = generateConclusionReport(algoA, algoB, metrics);
+
+        // Cuộn mượt mà xuống bảng kết quả
+        compareSummarySection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    // Event listeners cho Tab 3
+    if (btnComparePlay) {
+        btnComparePlay.addEventListener("click", () => {
+            if (isComparePlaying) {
+                pauseCompareSimulation();
+            } else {
+                playCompareSimulation();
+            }
+        });
+    }
+
+    if (btnCompareStep) {
+        btnCompareStep.addEventListener("click", () => {
+            pauseCompareSimulation();
+            stepCompareSimulation();
+        });
+    }
+
+    if (btnCompareReset) {
+        btnCompareReset.addEventListener("click", () => {
+            resetCompareSimulation();
+        });
+    }
+
+    if (compareAlgoA) {
+        compareAlgoA.addEventListener("change", () => {
+            resetCompareSimulation();
+        });
+    }
+
+    if (compareAlgoB) {
+        compareAlgoB.addEventListener("change", () => {
+            resetCompareSimulation();
+        });
+    }
+
+    if (compareArrayInput) {
+        compareArrayInput.addEventListener("change", () => {
+            resetCompareSimulation();
+        });
+    }
+
+    comparePresetButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const presetKey = btn.dataset.preset;
+            const presetVal = COMPARE_PRESETS[presetKey];
+            if (presetVal && compareArrayInput) {
+                compareArrayInput.value = typeof presetVal === "function" ? presetVal() : presetVal;
+                resetCompareSimulation();
+            }
+        });
+    });
+
+    // --------------------------------------------------------------------------
     // INITIALIZATION
     // --------------------------------------------------------------------------
     populateBigDataAlgoSelect();
+    populateCompareAlgoSelects();
     renderEncyclopediaCards();
     resetSimulation();
+    resetCompareSimulation();
 });

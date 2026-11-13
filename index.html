@@ -30,6 +30,9 @@
             <button class="nav-tab-btn active" data-tab="tab-simulation">
                 <span>🎯</span> Mô phỏng
             </button>
+            <button class="nav-tab-btn" data-tab="tab-comparison">
+                <span>⚔️</span> So sánh thuật toán
+            </button>
             <button class="nav-tab-btn" data-tab="tab-encyclopedia">
                 <span>📚</span> Thuật toán (22)
             </button>
@@ -235,6 +238,176 @@
                         </div>
                     </div>
 
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- TAB 3: SO SÁNH THUẬT TOÁN (HEAD-TO-HEAD COMPARISON ARENA) -->
+        <!-- ================================================================ -->
+        <section id="tab-comparison" class="tab-panel">
+            <div class="compare-arena-container">
+                <!-- Arena Header -->
+                <div class="compare-header-box">
+                    <div class="compare-header-info">
+                        <span class="compare-badge">HEAD-TO-HEAD BATTLE ARENA</span>
+                        <h2>⚔️ Đấu Trường So Sánh Thuật Toán Song Song</h2>
+                        <p>Chọn 2 thuật toán bất kỳ để đối đầu trực tiếp trên cùng một bộ dữ liệu kiểm thử. Quan sát trực quan hai bên chạy cùng nhịp, so sánh số bước, số phép so sánh, số lần đổi chỗ và thời gian thực thi theo thời gian thực.</p>
+                    </div>
+                </div>
+
+                <!-- Input & Presets Panel -->
+                <div class="compare-input-panel">
+                    <div class="compare-input-row">
+                        <label for="compareArrayInput"><strong>Dãy số kiểm thử chung (hỗ trợ số thực, số âm):</strong></label>
+                        <input type="text" id="compareArrayInput" class="array-input" value="28, -14, 55, 0, -8.5, 42, 19, -32, 70, 5, -18, 63, 12, -3">
+                    </div>
+                    <div class="compare-presets-row">
+                        <span class="preset-label">Mẫu dữ liệu:</span>
+                        <button class="preset-btn compare-preset-btn" data-preset="random_16">🎲 Ngẫu nhiên 16</button>
+                        <button class="preset-btn compare-preset-btn" data-preset="random_35">🎲 Ngẫu nhiên 35</button>
+                        <button class="preset-btn compare-preset-btn" data-preset="random_70">🎲 Ngẫu nhiên 70</button>
+                        <button class="preset-btn compare-preset-btn" data-preset="reversed">🔄 Đảo ngược (Worst case)</button>
+                        <button class="preset-btn compare-preset-btn" data-preset="nearly_sorted">📈 Gần có thứ tự (Best case)</button>
+                        <button class="preset-btn compare-preset-btn" data-preset="duplicates">👥 Trùng lặp nhiều</button>
+                        <button class="preset-btn compare-preset-btn" data-preset="neg_float">❄️ Số âm & Số thực</button>
+                    </div>
+                </div>
+
+                <!-- Master Action Bar -->
+                <div class="compare-control-bar">
+                    <div class="playback-buttons">
+                        <button id="btnComparePlay" class="btn btn-primary">
+                            <span id="comparePlayIcon">▶</span> <span id="comparePlayText">Bắt đầu so tài song song</span>
+                        </button>
+                        <button id="btnCompareStep" class="btn btn-secondary" title="Cả hai cùng bước tiếp 1 nhịp">
+                            <span>⏭</span> Bước tới cả hai
+                        </button>
+                        <button id="btnCompareReset" class="btn btn-secondary" title="Đặt lại trạng thái ban đầu">
+                            <span>🔄</span> Đặt lại dãy
+                        </button>
+                    </div>
+
+                    <div class="speed-control">
+                        <label for="compareSpeedSlider">Tốc độ:</label>
+                        <input type="range" id="compareSpeedSlider" min="20" max="1000" value="820">
+                    </div>
+
+                    <div class="batch-speed-group">
+                        <span>Gia tốc:</span>
+                        <select id="compareBatchSelect" class="batch-select">
+                            <option value="1" selected>1x (Từng bước)</option>
+                            <option value="2">2x (Gấp đôi)</option>
+                            <option value="5">5x (Nhanh)</option>
+                            <option value="15">15x (Siêu tốc)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Side-by-side Arena Grid -->
+                <div class="compare-arena-grid">
+                    <!-- Fighter A -->
+                    <div class="fighter-card fighter-a" id="fighterCardA">
+                        <div class="fighter-header">
+                            <div class="fighter-title-group">
+                                <span class="fighter-tag tag-a">ĐẤU THỦ A</span>
+                                <select id="compareAlgoA" class="fighter-algo-select"></select>
+                            </div>
+                            <span id="fighterStatusA" class="fighter-status-badge ready">Sẵn sàng</span>
+                        </div>
+                        <div class="fighter-stats-row">
+                            <div class="fighter-stat-item">
+                                <span class="stat-lbl">So sánh</span>
+                                <strong id="fighterCompA" class="stat-val">0</strong>
+                            </div>
+                            <div class="fighter-stat-item">
+                                <span class="stat-lbl">Hoán đổi</span>
+                                <strong id="fighterSwapA" class="stat-val">0</strong>
+                            </div>
+                            <div class="fighter-stat-item">
+                                <span class="stat-lbl">Số bước</span>
+                                <strong id="fighterStepA" class="stat-val">0</strong>
+                            </div>
+                            <div class="fighter-stat-item">
+                                <span class="stat-lbl">Thời gian</span>
+                                <strong id="fighterTimeA" class="stat-val time-val">0.0 ms</strong>
+                            </div>
+                        </div>
+                        <div class="fighter-canvas-wrapper">
+                            <div class="bars-container" id="compareBarsA"></div>
+                        </div>
+                        <div class="fighter-explain" id="fighterExplainA">Chờ lệnh bắt đầu cuộc so tài...</div>
+                    </div>
+
+                    <!-- Fighter B -->
+                    <div class="fighter-card fighter-b" id="fighterCardB">
+                        <div class="fighter-header">
+                            <div class="fighter-title-group">
+                                <span class="fighter-tag tag-b">ĐẤU THỦ B</span>
+                                <select id="compareAlgoB" class="fighter-algo-select"></select>
+                            </div>
+                            <span id="fighterStatusB" class="fighter-status-badge ready">Sẵn sàng</span>
+                        </div>
+                        <div class="fighter-stats-row">
+                            <div class="fighter-stat-item">
+                                <span class="stat-lbl">So sánh</span>
+                                <strong id="fighterCompB" class="stat-val">0</strong>
+                            </div>
+                            <div class="fighter-stat-item">
+                                <span class="stat-lbl">Hoán đổi</span>
+                                <strong id="fighterSwapB" class="stat-val">0</strong>
+                            </div>
+                            <div class="fighter-stat-item">
+                                <span class="stat-lbl">Số bước</span>
+                                <strong id="fighterStepB" class="stat-val">0</strong>
+                            </div>
+                            <div class="fighter-stat-item">
+                                <span class="stat-lbl">Thời gian</span>
+                                <strong id="fighterTimeB" class="stat-val time-val">0.0 ms</strong>
+                            </div>
+                        </div>
+                        <div class="fighter-canvas-wrapper">
+                            <div class="bars-container" id="compareBarsB"></div>
+                        </div>
+                        <div class="fighter-explain" id="fighterExplainB">Chờ lệnh bắt đầu cuộc so tài...</div>
+                    </div>
+                </div>
+
+                <!-- Comparison Summary & Scientific Analysis -->
+                <div class="compare-summary-section" id="compareSummarySection" style="display: none;">
+                    <!-- Winner announcement banner -->
+                    <div class="winner-announcement" id="winnerAnnouncement"></div>
+
+                    <!-- Head-to-Head Detailed Table -->
+                    <div class="summary-table-wrapper">
+                        <div class="summary-table-header">
+                            <span class="summary-badge">BÁO CÁO KẾT QUẢ</span>
+                            <h3 class="summary-heading">📊 Bảng Tổng Kết So Sánh Chi Tiết</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="compare-table" id="compareSummaryTable">
+                                <thead>
+                                    <tr>
+                                        <th>Tiêu chí so sánh</th>
+                                        <th id="thAlgoA">Đấu thủ A</th>
+                                        <th id="thAlgoB">Đấu thủ B</th>
+                                        <th>Tỷ lệ chênh lệch & Đánh giá</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="compareSummaryTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Deep Analysis & Conclusion Box -->
+                    <div class="conclusion-box" id="conclusionBox">
+                        <div class="conclusion-header">
+                            <span class="conclusion-icon">🔬</span>
+                            <h4>KẾT LUẬN & PHÂN TÍCH CHUYÊN SÂU</h4>
+                        </div>
+                        <div class="conclusion-body" id="conclusionBody"></div>
+                    </div>
                 </div>
 
             </div>
