@@ -1139,31 +1139,90 @@ const ALGORITHMS = {
             let a = [...arr];
             let soPhanTu = a.length;
             let soLuotThu = 0;
-            const maxLuot = 15;
 
-            function kiemTraDaXep() {
-                for (let i = 0; i < soPhanTu - 1; ++i) {
-                    if (a[i] > a[i + 1]) return false;
-                }
-                return true;
-            }
+            // Với mảng rất nhỏ (N <= 5), xác suất tìm ra hoán vị đúng là khả thi (vài trăm lượt).
+            // Với N >= 6, N! bùng nổ (6! = 720, 10! = 3.6 triệu, 100! = 10^157), cần giới hạn ngẫu nhiên an toàn.
+            const maxLuot = soPhanTu <= 4 ? 400 : (soPhanTu <= 5 ? 1200 : (Math.floor(Math.random() * 15) + 12));
 
-            while (!kiemTraDaXep() && soLuotThu < maxLuot) {
+            let daXepXong = false;
+
+            while (!daXepXong && soLuotThu < maxLuot) {
                 soLuotThu++;
-                yield { line: 8, explanation: `Lượt thử #${soLuotThu}: Mảng chưa đúng thứ tự, bắt đầu xáo trộn ngẫu nhiên!`, indices: [], type: 'info', array: [...a], vars: { soLuotThu } };
+                yield {
+                    line: 7,
+                    explanation: `Lượt thử #${soLuotThu}: Quét kiểm tra thứ tự mảng...`,
+                    indices: [],
+                    type: 'info',
+                    array: [...a],
+                    vars: { soLuotThu }
+                };
 
+                // 1. Quét kiểm tra xem mảng đã có thứ tự chưa (yield compare)
+                daXepXong = true;
+                for (let i = 0; i < soPhanTu - 1; ++i) {
+                    yield {
+                        line: 2,
+                        explanation: `Kiểm tra cặp mang[${i}]=${a[i]} và mang[${i + 1}]=${a[i + 1]}`,
+                        indices: [i, i + 1],
+                        type: 'compare',
+                        array: [...a],
+                        vars: { soLuotThu, i }
+                    };
+
+                    if (a[i] > a[i + 1]) {
+                        daXepXong = false;
+                        yield {
+                            line: 2,
+                            explanation: `Phát hiện sai thứ tự (${a[i]} > ${a[i + 1]}). Dừng kiểm tra, tiến hành xáo trộn!`,
+                            indices: [i, i + 1],
+                            type: 'compare',
+                            array: [...a],
+                            vars: { soLuotThu, i }
+                        };
+                        break;
+                    }
+                }
+
+                if (daXepXong) {
+                    break;
+                }
+
+                // 2. Xáo trộn ngẫu nhiên mảng (Fisher-Yates Shuffle)
                 for (let i = soPhanTu - 1; i > 0; --i) {
                     let j = Math.floor(Math.random() * (i + 1));
-                    [a[i], a[j]] = [a[j], a[i]];
-                    yield { line: 11, explanation: `Xáo trộn: Đổi chỗ mang[${i}] và mang[${j}]`, indices: [i, j], type: 'swap', array: [...a], vars: { soLuotThu, i, j } };
+                    if (i !== j) {
+                        [a[i], a[j]] = [a[j], a[i]];
+                        yield {
+                            line: 11,
+                            explanation: `Xáo trộn: Đổi chỗ ngẫu nhiên mang[${i}] ⇄ mang[${j}]`,
+                            indices: [i, j],
+                            type: 'swap',
+                            array: [...a],
+                            vars: { soLuotThu, i, j }
+                        };
+                    }
                 }
             }
 
-            if (kiemTraDaXep()) {
-                yield { line: 12, explanation: `Thật kỳ diệu! Mảng đã tình cờ được sắp xếp đúng sau ${soLuotThu} lượt xáo trộn!`, indices: a.map((_, i) => i), type: 'sorted', array: [...a], vars: { soLuotThu } };
+            if (daXepXong) {
+                yield {
+                    line: 12,
+                    explanation: `🎉 Thật kỳ diệu! Mảng đã tình cờ được sắp xếp đúng sau ${soLuotThu} lượt thử ngẫu nhiên!`,
+                    indices: a.map((_, i) => i),
+                    type: 'sorted',
+                    array: [...a],
+                    vars: { soLuotThu }
+                };
             } else {
                 a.sort((x, y) => x - y);
-                yield { line: 12, explanation: `Đã đạt giới hạn an toàn (${maxLuot} lượt). Tự động chốt dãy sắp xếp để bảo vệ trình duyệt!`, indices: a.map((_, i) => i), type: 'sorted', array: [...a], vars: { soLuotThu } };
+                yield {
+                    line: 12,
+                    explanation: `⚠️ Dừng lại sau ${soLuotThu} lượt xáo trộn! Với N = ${soPhanTu}, xác suất sắp xếp đúng ngẫu nhiên là 1/${soPhanTu}! (xấp xỉ 0). Cưỡng chế sắp xếp để kết thúc mô phỏng.`,
+                    indices: a.map((_, i) => i),
+                    type: 'sorted',
+                    array: [...a],
+                    vars: { soLuotThu }
+                };
             }
         }
     },
