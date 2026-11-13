@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorting Algorithm Studio - Trực quan hóa & Bách khoa toàn thư Thuật toán Sắp xếp</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- ==================================================================== -->
+    <!-- HEADER -->
+    <!-- ==================================================================== -->
+    <header class="app-header">
+        <div class="brand">
+            <span class="brand-icon">⚡</span>
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="brand-title">Sorting Studio</span>
+                    <span class="brand-badge">GitHub Pages Ready</span>
+                </div>
+            </div>
+        </div>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab-btn active" data-tab="tab-simulation">
+                <span>🎯</span> Mô phỏng
+            </button>
+            <button class="nav-tab-btn" data-tab="tab-encyclopedia">
+                <span>📚</span> Thuật toán (15)
+            </button>
+        </nav>
+
+        <div class="header-actions">
+            <button class="btn-gh-deploy" id="btnOpenDeployModal">
+                <span>🚀</span> Hướng dẫn đưa lên GitHub Pages
+            </button>
+        </div>
+    </header>
+
+    <!-- ==================================================================== -->
+    <!-- MAIN CONTAINER -->
+    <!-- ==================================================================== -->
+    <main class="main-content">
+
+        <!-- ================================================================ -->
+        <!-- TAB 1: MÔ PHỎNG (SIMULATION VIEW) -->
+        <!-- ================================================================ -->
+        <section id="tab-simulation" class="tab-panel active">
+            <div class="simulation-layout">
+
+                <!-- Control & Input Card -->
+                <div class="card-panel">
+                    <div class="input-section-grid">
+                        
+                        <!-- Left: Array Input & Presets -->
+                        <div class="input-group">
+                            <label for="arrayInput">
+                                Dãy số đầu vào (Hỗ trợ <strong>số âm, số thực, không giới hạn số lượng</strong>, phân tách bằng dấu phẩy hoặc khoảng trắng):
+                            </label>
+                            <div class="array-input-wrapper">
+                                <input type="text" id="arrayInput" class="array-input" 
+                                    value="-15.5, 42, -3.2, 0, 88.5, -9, 23.4, 7.8, -35, 60, 14, -2.5" 
+                                    placeholder="Ví dụ: -12.5, 45, 0, -3.2, 100, 18.75, -50, 7.1">
+                            </div>
+                            <div class="presets-row">
+                                <span style="font-size: 0.75rem; color: var(--text-muted); align-self: center; margin-right: 4px;">Mẫu nhanh:</span>
+                                <button class="preset-btn" data-preset="neg_float">📉 Số âm & Số thực</button>
+                                <button class="preset-btn" data-preset="random_12">🎲 Ngẫu nhiên 12</button>
+                                <button class="preset-btn" data-preset="reversed">🔄 Đảo ngược</button>
+                                <button class="preset-btn" data-preset="nearly_sorted">📈 Gần có thứ tự</button>
+                                <button class="preset-btn" data-preset="large_35">📊 Nhiều phần tử (35)</button>
+                                <button class="preset-btn" data-preset="duplicates">👥 Trùng lặp nhiều</button>
+                            </div>
+                        </div>
+
+                        <!-- Right: Algorithm Selection -->
+                        <div class="algo-select-wrapper">
+                            <label for="algoSelect">Thuật toán sắp xếp:</label>
+                            <select id="algoSelect" class="algo-select">
+                                <optgroup label="Chia để trị & Cây nhị phân">
+                                    <option value="quick_sort">Quick Sort (Sắp xếp nhanh)</option>
+                                    <option value="merge_sort">Merge Sort (Sắp xếp trộn)</option>
+                                    <option value="heap_sort">Heap Sort (Sắp xếp vun đống)</option>
+                                </optgroup>
+                                <optgroup label="Chèn, Chọn & Đổi chỗ">
+                                    <option value="insertion_sort">Insertion Sort (Sắp xếp chèn)</option>
+                                    <option value="binary_insertion_sort">Binary Insertion Sort (Chèn nhị phân)</option>
+                                    <option value="selection_sort">Selection Sort (Sắp xếp chọn)</option>
+                                    <option value="bubble_sort">Bubble Sort (Sắp xếp nổi bọt)</option>
+                                    <option value="shell_sort">Shell Sort (Sắp xếp Shell)</option>
+                                    <option value="cocktail_sort">Cocktail Shaker Sort (Nổi bọt 2 chiều)</option>
+                                    <option value="comb_sort">Comb Sort (Sắp xếp lược)</option>
+                                    <option value="gnome_sort">Gnome Sort (Chú lùn vườn)</option>
+                                </optgroup>
+                                <optgroup label="Phân phối & Không so sánh">
+                                    <option value="bucket_sort">Bucket Sort (Theo thùng - Tốt cho số thực)</option>
+                                    <option value="counting_sort">Counting Sort (Sắp xếp đếm)</option>
+                                    <option value="radix_sort">Radix Sort (Sắp xếp cơ số LSD)</option>
+                                </optgroup>
+                                <optgroup label="Thú vị / Giáo dục">
+                                    <option value="bogo_sort">Bogo Sort (Ngẫu nhiên - Giáo dục)</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Action Bar: Play/Pause/Step/Reset & Speed & Counters -->
+                    <div class="control-bar">
+                        <div class="playback-buttons">
+                            <button id="btnPlayPause" class="btn btn-primary">
+                                <span id="playIcon">▶</span> <span id="playText">Chạy mô phỏng</span>
+                            </button>
+                            <button id="btnStep" class="btn btn-secondary" title="Chạy từng bước một">
+                                <span>⏭</span> Bước tới
+                            </button>
+                            <button id="btnReset" class="btn btn-secondary" title="Đặt lại trạng thái ban đầu">
+                                <span>🔄</span> Đặt lại
+                            </button>
+                        </div>
+
+                        <div class="speed-control">
+                            <span>Tốc độ:</span>
+                            <span style="font-size: 0.75rem;">Chậm</span>
+                            <input type="range" id="speedSlider" class="speed-slider" min="20" max="1000" value="400" step="20">
+                            <span style="font-size: 0.75rem;">Nhanh</span>
+                        </div>
+
+                        <div class="stats-badges">
+                            <div class="stat-pill">So sánh: <strong id="statComparisons">0</strong></div>
+                            <div class="stat-pill">Hoán đổi: <strong id="statSwaps">0</strong></div>
+                            <div class="stat-pill">Bước: <strong id="statSteps">0</strong></div>
+                            <div class="stat-pill">Số phần tử: <strong id="statElements">0</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Split Workspace: Canvas on Left, Code Stepper on Right -->
+                <div class="workspace-grid">
+                    
+                    <!-- Left: Zero-Axis Canvas -->
+                    <div class="stage-panel">
+                        <div class="stage-header">
+                            <div class="stage-title">
+                                <span>KHÔNG GIAN TRỰC QUAN HÓA (HỖ TRỢ TRỤC SỐ ÂM / DƯƠNG)</span>
+                            </div>
+                            <div class="legend-pills">
+                                <div class="legend-pill">
+                                    <span class="color-dot" style="background: var(--accent-blue);"></span> Số dương
+                                </div>
+                                <div class="legend-pill">
+                                    <span class="color-dot" style="background: var(--accent-red);"></span> Số âm
+                                </div>
+                                <div class="legend-pill">
+                                    <span class="color-dot" style="background: var(--bar-comparing);"></span> So sánh
+                                </div>
+                                <div class="legend-pill">
+                                    <span class="color-dot" style="background: var(--bar-swapping);"></span> Hoán đổi
+                                </div>
+                                <div class="legend-pill">
+                                    <span class="color-dot" style="background: var(--bar-pivot);"></span> Pivot/Key
+                                </div>
+                                <div class="legend-pill">
+                                    <span class="color-dot" style="background: var(--bar-sorted);"></span> Đã chốt
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="canvas-wrapper">
+                            <div class="bars-container" id="barsContainer">
+                                <!-- Trục số 0 & các thanh cột bar được sinh động qua JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Code Stepper & Trace -->
+                    <div class="code-panel">
+                        <div class="code-header">
+                            <span class="code-header-title" id="codePanelTitle">MÃ NGUỒN C++ & DÒ VẾT TỪNG DÒNG</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Đồng bộ thời gian thực</span>
+                        </div>
+
+                        <!-- Code Line Box -->
+                        <div class="code-editor-box" id="codeEditorBox">
+                            <!-- Code lines with line numbers & active highlight will be injected here -->
+                        </div>
+
+                        <!-- Real-time Explanation Banner -->
+                        <div class="explanation-box">
+                            <span class="explanation-icon">💡</span>
+                            <div class="explanation-text" id="explanationText">
+                                Nhấn <strong>"Chạy mô phỏng"</strong> hoặc <strong>"Bước tới"</strong> để bắt đầu theo dõi thuật toán hoạt động.
+                            </div>
+                        </div>
+
+                        <!-- Variable Watcher -->
+                        <div class="var-watcher" id="varWatcher">
+                            <span style="color: var(--text-muted); align-self: center;">Biến theo dõi:</span>
+                            <div class="var-pill">Chưa có dữ liệu</div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- TAB 2: THUẬT TOÁN (ENCYCLOPEDIA & INTERACTIVE MINI DEMOS) -->
+        <!-- ================================================================ -->
+        <section id="tab-encyclopedia" class="tab-panel">
+            <div class="encyclopedia-header">
+                <div class="encyclopedia-title">
+                    <h2>Bách Khoa Toàn Thư Thuật Toán Sắp Xếp</h2>
+                    <p>Khám phá bản chất, độ phức tạp thuật toán, ưu/nhược điểm và chạy mô phỏng tương tác trực tiếp trên từng thẻ.</p>
+                </div>
+
+                <!-- Category Filters -->
+                <div class="category-filters" id="categoryFilters">
+                    <button class="cat-filter-btn active" data-cat="all">Tất cả (15)</button>
+                    <button class="cat-filter-btn" data-cat="Chia để trị & Cây">Chia để trị & Cây</button>
+                    <button class="cat-filter-btn" data-cat="Chèn & Chọn">Chèn & Chọn</button>
+                    <button class="cat-filter-btn" data-cat="Đổi chỗ & Nổi bọt">Đổi chỗ & Nổi bọt</button>
+                    <button class="cat-filter-btn" data-cat="Phi so sánh & Thùng">Phi so sánh & Thùng</button>
+                    <button class="cat-filter-btn" data-cat="Giáo dục">Giáo dục</button>
+                </div>
+            </div>
+
+            <!-- Algorithm Cards Grid with Embedded Mini-Visualizers -->
+            <div class="algo-cards-grid" id="algoCardsGrid">
+                <!-- Injected dynamically via JS from ALGORITHMS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================================================================== -->
+    <!-- MODAL: GITHUB PAGES DEPLOYMENT GUIDE -->
+    <!-- ==================================================================== -->
+    <div class="modal-overlay" id="deployModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">🚀 Hướng dẫn đưa lên GitHub Pages trong 3 phút</h3>
+                <button class="modal-close-btn" id="btnCloseModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 14px; color: var(--text-secondary);">
+                    Dự án này là ứng dụng web tĩnh thuần túy (HTML/CSS/JS không phụ thuộc framework hay build tool), sẵn sàng để chạy miễn phí trên GitHub Pages bất cứ lúc nào!
+                </p>
+
+                <ol>
+                    <li>
+                        <strong>Tạo Repository mới trên GitHub:</strong><br>
+                        Truy cập <a href="https://github.com/new" target="_blank" style="color: var(--accent-cyan);">github.com/new</a> và đặt tên repository (ví dụ: <code>sorting-studio</code>). Để chế độ <strong>Public</strong>.
+                    </li>
+                    <li>
+                        <strong>Đẩy toàn bộ mã nguồn lên GitHub:</strong><br>
+                        Mở Terminal tại thư mục dự án và chạy các lệnh sau:
+                        <pre>git init
+git add .
+git commit -m "Khoi tao Sorting Studio Visualizer"
+git branch -M main
+git remote add origin https://github.com/&lt;ten-tai-khoan&gt;/&lt;ten-repo&gt;.git
+git push -u origin main</pre>
+                    </li>
+                    <li>
+                        <strong>Kích hoạt GitHub Pages:</strong><br>
+                        - Vào mục <strong>Settings</strong> của repository trên GitHub.<br>
+                        - Ở thanh bên trái, chọn <strong>Pages</strong>.<br>
+                        - Tại mục <em>Build and deployment</em> &gt; <em>Branch</em>: chọn <code>main</code> và thư mục <code>/ (root)</code>.<br>
+                        - Nhấn <strong>Save</strong>.
+                    </li>
+                    <li>
+                        <strong>Thưởng thức thành quả:</strong><br>
+                        Sau khoảng 30 giây đến 1 phút, trang web của bạn sẽ hoạt động trực tiếp tại địa chỉ:
+                        <br>
+                        <code>https://&lt;ten-tai-khoan&gt;.github.io/&lt;ten-repo&gt;/</code>
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>Sorting Algorithm Studio &bull; Hỗ trợ số âm, số thực & trực quan hóa từng bước mã nguồn C++ &bull; Tương thích 100% GitHub Pages.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="algorithms.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
