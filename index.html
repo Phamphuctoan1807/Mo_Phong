@@ -73,8 +73,12 @@
                                 <button class="preset-btn" data-preset="random_12">🎲 Ngẫu nhiên 12</button>
                                 <button class="preset-btn" data-preset="reversed">🔄 Đảo ngược</button>
                                 <button class="preset-btn" data-preset="nearly_sorted">📈 Gần có thứ tự</button>
-                                <button class="preset-btn" data-preset="large_35">📊 Nhiều phần tử (35)</button>
+                                <button class="preset-btn" data-preset="large_35">📊 35 phần tử</button>
                                 <button class="preset-btn" data-preset="duplicates">👥 Trùng lặp nhiều</button>
+                                <span style="font-size: 0.75rem; color: var(--accent-cyan); align-self: center; margin-left: 6px; margin-right: 2px;">Siêu dữ liệu:</span>
+                                <button class="preset-btn btn-big-data" id="btnPreset100" data-preset="big_100">⚡ 100 số (Popup)</button>
+                                <button class="preset-btn btn-big-data" id="btnPreset1000" data-preset="big_1000">🔥 1,000 số (Popup)</button>
+                                <button class="preset-btn btn-big-data" id="btnPreset10000" data-preset="big_10000">🚀 10,000 số (Popup)</button>
                             </div>
                         </div>
 
@@ -181,7 +185,23 @@
                             </div>
                         </div>
 
-                        <div class="canvas-wrapper">
+                        <div class="canvas-wrapper" id="canvasWrapper">
+                            <!-- Cỗ máy quét và đổi chỗ ngang (Robot Scanner Machine) -->
+                            <div class="scanner-machine" id="scannerMachine" style="opacity: 0; pointer-events: none;">
+                                <div class="machine-hud" id="machineHud">
+                                    <span class="machine-icon" id="machineIcon">🤖</span>
+                                    <span class="machine-msg" id="machineMsg">Sẵn sàng</span>
+                                </div>
+                                <div class="machine-arms-wrapper">
+                                    <div class="machine-arm arm-left" id="machineArmLeft">
+                                        <div class="arm-gripper">▼</div>
+                                    </div>
+                                    <div class="machine-beam" id="machineBeam"></div>
+                                    <div class="machine-arm arm-right" id="machineArmRight">
+                                        <div class="arm-gripper">▼</div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="bars-container" id="barsContainer">
                                 <!-- Trục số 0 & các thanh cột bar được sinh động qua JS -->
                             </div>
@@ -295,6 +315,79 @@ git push -u origin main</pre>
                         <code>https://&lt;ten-tai-khoan&gt;.github.io/&lt;ten-repo&gt;/</code>
                     </li>
                 </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- MODAL: BIG DATA LAB (100, 1,000, 10,000 PHẦN TỬ) -->
+    <!-- ==================================================================== -->
+    <div class="big-data-modal" id="bigDataModal">
+        <div class="big-data-container">
+            <!-- Header bar -->
+            <div class="big-data-header">
+                <div class="big-data-title-group">
+                    <span class="big-data-badge">BIG DATA LAB</span>
+                    <h3 id="bigDataHeading" class="big-data-heading">Mô phỏng 1,000 phần tử</h3>
+                </div>
+
+                <div class="big-data-controls-row">
+                    <select id="bigDataAlgoSelect" class="big-data-select">
+                        <option value="intro_sort" selected>👑 IntroSort (C++ std::sort - Nhanh nhất)</option>
+                        <option value="quick_sort">Quick Sort (Sắp xếp nhanh)</option>
+                        <option value="merge_sort">Merge Sort (Sắp xếp trộn)</option>
+                        <option value="heap_sort">Heap Sort (Vun đống O(1) RAM)</option>
+                        <option value="tim_sort">TimSort (Chuẩn Python & Java)</option>
+                        <option value="radix_sort">Radix Sort (Cơ số LSD)</option>
+                        <option value="counting_sort">Counting Sort (Sắp xếp đếm)</option>
+                        <option value="shell_sort">Shell Sort (Sắp xếp Shell)</option>
+                        <option value="bitonic_sort">Bitonic Sort (Song song GPU)</option>
+                        <option value="cycle_sort">Cycle Sort (Tối ưu ghi nhớ)</option>
+                        <option value="pancake_sort">Pancake Sort (Lật mảng bánh kếp)</option>
+                        <option value="bubble_sort">Bubble Sort (Cảnh báo: Rất chậm với N lớn)</option>
+                    </select>
+
+                    <button id="btnBigDataPlay" class="btn btn-primary">
+                        <span id="bigPlayIcon">▶</span> <span id="bigPlayText">Chạy siêu tốc</span>
+                    </button>
+                    <button id="btnBigDataReset" class="btn btn-secondary">
+                        <span>🔄</span> Tạo lại dãy
+                    </button>
+
+                    <div class="batch-speed-group">
+                        <span>Gia tốc:</span>
+                        <select id="bigDataBatchSelect" class="batch-select">
+                            <option value="1">1x (Từng bước)</option>
+                            <option value="5">5x (Nhanh)</option>
+                            <option value="25" selected>25x (Rất nhanh)</option>
+                            <option value="100">100x (Siêu tốc)</option>
+                            <option value="500">500x (Cực đại)</option>
+                        </select>
+                    </div>
+
+                    <button id="btnBigDataClose" class="btn-close-big">✕ Thu nhỏ</button>
+                </div>
+            </div>
+
+            <!-- Canvas Visualization Area -->
+            <div class="big-data-canvas-wrapper">
+                <canvas id="bigDataCanvas"></canvas>
+                <!-- O(N^2) Warning banner -->
+                <div id="bigDataWarning" class="big-data-warning" style="display: none;"></div>
+            </div>
+
+            <!-- Floating Corner HUD: Telemetry + Mini Code Stepper -->
+            <div class="big-data-floating-corner">
+                <div class="floating-telemetry">
+                    <div>Số phần tử: <strong id="bigDataCount">0</strong></div>
+                    <div>So sánh: <strong id="bigDataComparisons">0</strong></div>
+                    <div>Hoán đổi: <strong id="bigDataSwaps">0</strong></div>
+                    <div>Trạng thái: <strong id="bigDataStatus" style="color: var(--accent-cyan);">Sẵn sàng</strong></div>
+                </div>
+                <div class="floating-code-box">
+                    <div class="floating-code-title" id="floatingCodeTitle">MÃ NGUỒN C++ (MINI SYNC)</div>
+                    <div class="floating-code-content" id="floatingCodeContent"></div>
+                </div>
             </div>
         </div>
     </div>

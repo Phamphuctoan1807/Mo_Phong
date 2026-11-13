@@ -39,6 +39,35 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnCloseModal = document.getElementById("btnCloseModal");
     const deployModal = document.getElementById("deployModal");
 
+    // Robot Scanner Machine DOM
+    const canvasWrapper = document.getElementById("canvasWrapper");
+    const scannerMachine = document.getElementById("scannerMachine");
+    const machineHud = document.getElementById("machineHud");
+    const machineIcon = document.getElementById("machineIcon");
+    const machineMsg = document.getElementById("machineMsg");
+    const machineArmLeft = document.getElementById("machineArmLeft");
+    const machineArmRight = document.getElementById("machineArmRight");
+    const machineBeam = document.getElementById("machineBeam");
+
+    // Big Data Lab DOM
+    const bigDataModal = document.getElementById("bigDataModal");
+    const bigDataHeading = document.getElementById("bigDataHeading");
+    const bigDataAlgoSelect = document.getElementById("bigDataAlgoSelect");
+    const btnBigDataPlay = document.getElementById("btnBigDataPlay");
+    const bigPlayIcon = document.getElementById("bigPlayIcon");
+    const bigPlayText = document.getElementById("bigPlayText");
+    const btnBigDataReset = document.getElementById("btnBigDataReset");
+    const bigDataBatchSelect = document.getElementById("bigDataBatchSelect");
+    const btnBigDataClose = document.getElementById("btnBigDataClose");
+    const bigDataCanvas = document.getElementById("bigDataCanvas");
+    const bigDataWarning = document.getElementById("bigDataWarning");
+    const bigDataCountEl = document.getElementById("bigDataCount");
+    const bigDataComparisonsEl = document.getElementById("bigDataComparisons");
+    const bigDataSwapsEl = document.getElementById("bigDataSwaps");
+    const bigDataStatusEl = document.getElementById("bigDataStatus");
+    const floatingCodeTitle = document.getElementById("floatingCodeTitle");
+    const floatingCodeContent = document.getElementById("floatingCodeContent");
+
     // --------------------------------------------------------------------------
     // APPLICATION STATE
     // --------------------------------------------------------------------------
@@ -52,6 +81,16 @@ document.addEventListener("DOMContentLoaded", () => {
     let comparisonsCount = 0;
     let swapsCount = 0;
     let stepsCount = 0;
+
+    // Big Data Lab State
+    let bigDataCount = 1000;
+    let bigDataArray = [];
+    let bigDataGen = null;
+    let bigDataIsPlaying = false;
+    let bigDataAnimationId = null;
+    let bigDataComparisons = 0;
+    let bigDataSwaps = 0;
+    let bigDataSteps = 0;
 
     // --------------------------------------------------------------------------
     // 1. INPUT PARSER (Hỗ trợ số âm, số thực, không giới hạn phần tử)
@@ -178,6 +217,129 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         statElements.textContent = totalElements;
+    }
+
+    // --------------------------------------------------------------------------
+    // 2B. CỖ MÁY ROBOT QUÉT & HOÁN ĐỔI NGANG (ROBOT SCANNER MACHINE)
+    // --------------------------------------------------------------------------
+    function updateScannerMachine(activeIndices = [], type = "default", arr = []) {
+        if (!scannerMachine || !canvasWrapper) return;
+
+        if (type === "sorted") {
+            scannerMachine.style.opacity = "1";
+            scannerMachine.style.left = "50%";
+            scannerMachine.style.transform = "translateX(-50%)";
+            scannerMachine.style.width = "320px";
+            machineHud.className = "machine-hud status-success";
+            machineIcon.textContent = "🏆";
+            machineMsg.innerHTML = `<strong>Hoàn tất!</strong> Dãy số đã sắp xếp chính xác`;
+            if (machineBeam) {
+                machineBeam.style.background = "linear-gradient(90deg, #3fb950, #7ee787)";
+                machineBeam.style.boxShadow = "0 0 10px rgba(63, 185, 80, 0.8)";
+            }
+            if (machineArmLeft) machineArmLeft.style.background = "linear-gradient(180deg, #3fb950, transparent)";
+            if (machineArmRight) machineArmRight.style.background = "linear-gradient(180deg, #3fb950, transparent)";
+            return;
+        }
+
+        if (!activeIndices || activeIndices.length === 0) {
+            scannerMachine.style.opacity = "0";
+            return;
+        }
+
+        const idx1 = activeIndices[0];
+        const idx2 = activeIndices.length > 1 ? activeIndices[1] : idx1;
+        const col1 = barsContainer.querySelector(`.bar-col[data-index="${idx1}"]`);
+        const col2 = barsContainer.querySelector(`.bar-col[data-index="${idx2}"]`);
+
+        if (!col1) {
+            scannerMachine.style.opacity = "0";
+            return;
+        }
+
+        const wrapperRect = canvasWrapper.getBoundingClientRect();
+        const rect1 = col1.getBoundingClientRect();
+        const rect2 = col2 ? col2.getBoundingClientRect() : rect1;
+
+        const scrollLeft = canvasWrapper.scrollLeft || 0;
+        const center1 = rect1.left + rect1.width / 2 - wrapperRect.left + scrollLeft;
+        const center2 = rect2.left + rect2.width / 2 - wrapperRect.left + scrollLeft;
+
+        const minCenter = Math.min(center1, center2);
+        const maxCenter = Math.max(center1, center2);
+
+        if (minCenter === maxCenter) {
+            scannerMachine.style.left = `${minCenter - 14}px`;
+            scannerMachine.style.width = `28px`;
+        } else {
+            scannerMachine.style.left = `${minCenter}px`;
+            scannerMachine.style.width = `${Math.max(20, maxCenter - minCenter)}px`;
+        }
+        scannerMachine.style.transform = "none";
+        scannerMachine.style.opacity = "1";
+
+        const minIdx = Math.min(idx1, idx2);
+        const maxIdx = Math.max(idx1, idx2);
+        const leftVal = arr[minIdx] !== undefined ? arr[minIdx] : "";
+        const rightVal = arr[maxIdx] !== undefined ? arr[maxIdx] : "";
+        const val1 = arr[idx1] !== undefined ? arr[idx1] : "";
+        const val2 = arr[idx2] !== undefined ? arr[idx2] : "";
+
+        if (type === "compare") {
+            if (idx1 !== idx2 && leftVal > rightVal) {
+                // Sai thứ tự: số đứng trước lại lớn hơn số đứng sau (Ví dụ 7 > 3)
+                machineHud.className = "machine-hud status-error";
+                machineIcon.textContent = "❌";
+                machineMsg.innerHTML = `<span style="color:#ff7b72; font-weight:800;">${leftVal} &gt; ${rightVal}</span> &bull; Sai thứ tự &rarr; Cần đổi chỗ ⚡`;
+                if (machineBeam) {
+                    machineBeam.style.background = "linear-gradient(90deg, #f85149, #ff7b72)";
+                    machineBeam.style.boxShadow = "0 0 14px rgba(248, 81, 73, 0.85)";
+                }
+                if (machineArmLeft) machineArmLeft.style.background = "linear-gradient(180deg, #f85149, transparent)";
+                if (machineArmRight) machineArmRight.style.background = "linear-gradient(180deg, #f85149, transparent)";
+            } else {
+                // Đúng thứ tự: số đứng trước nhỏ hơn hoặc bằng số đứng sau (Ví dụ 3 <= 7)
+                machineHud.className = "machine-hud status-success";
+                machineIcon.textContent = "✅";
+                machineMsg.innerHTML = `<span style="color:#7ee787; font-weight:800;">${leftVal} &le; ${rightVal}</span> &bull; Đúng vị trí &rarr; Bước tiếp`;
+                if (machineBeam) {
+                    machineBeam.style.background = "linear-gradient(90deg, #3fb950, #7ee787)";
+                    machineBeam.style.boxShadow = "0 0 10px rgba(63, 185, 80, 0.8)";
+                }
+                if (machineArmLeft) machineArmLeft.style.background = "linear-gradient(180deg, #3fb950, transparent)";
+                if (machineArmRight) machineArmRight.style.background = "linear-gradient(180deg, #3fb950, transparent)";
+            }
+        } else if (type === "swap") {
+            machineHud.className = "machine-hud status-swapping";
+            machineIcon.textContent = "🔄";
+            machineMsg.innerHTML = `<span>Hoán đổi:</span> <strong>${val1}</strong> ⇄ <strong>${val2}</strong>`;
+            if (machineBeam) {
+                machineBeam.style.background = "linear-gradient(90deg, #e3b341, #f2cc60)";
+                machineBeam.style.boxShadow = "0 0 16px rgba(227, 179, 65, 0.9)";
+            }
+            if (machineArmLeft) machineArmLeft.style.background = "linear-gradient(180deg, #e3b341, transparent)";
+            if (machineArmRight) machineArmRight.style.background = "linear-gradient(180deg, #e3b341, transparent)";
+        } else if (type === "pivot") {
+            machineHud.className = "machine-hud status-pivot";
+            machineIcon.textContent = "🎯";
+            machineMsg.innerHTML = `<span>Chốt Pivot:</span> <strong>${val1}</strong> [${idx1}]`;
+            if (machineBeam) {
+                machineBeam.style.background = "linear-gradient(90deg, #a371f7, #d2a8ff)";
+                machineBeam.style.boxShadow = "0 0 14px rgba(163, 113, 247, 0.85)";
+            }
+            if (machineArmLeft) machineArmLeft.style.background = "linear-gradient(180deg, #a371f7, transparent)";
+            if (machineArmRight) machineArmRight.style.background = "linear-gradient(180deg, #a371f7, transparent)";
+        } else {
+            machineHud.className = "machine-hud status-range";
+            machineIcon.textContent = "🤖";
+            machineMsg.textContent = `Phạm vi [${activeIndices.join(", ")}]`;
+            if (machineBeam) {
+                machineBeam.style.background = "linear-gradient(90deg, var(--accent-cyan), var(--accent-blue))";
+                machineBeam.style.boxShadow = "0 0 10px rgba(57, 197, 207, 0.7)";
+            }
+            if (machineArmLeft) machineArmLeft.style.background = "linear-gradient(180deg, var(--accent-cyan), transparent)";
+            if (machineArmRight) machineArmRight.style.background = "linear-gradient(180deg, var(--accent-cyan), transparent)";
+        }
     }
 
     // --------------------------------------------------------------------------
@@ -314,6 +476,7 @@ document.addEventListener("DOMContentLoaded", () => {
         explanationText.innerHTML = `Đã chuẩn bị mảng với <strong>${initialArray.length}</strong> phần tử. Nhấn <strong>"Chạy mô phỏng"</strong> hoặc <strong>"Bước tới"</strong>.`;
         updateVariableWatcher({});
         renderBars(currentArray);
+        updateScannerMachine([], "default", currentArray);
         renderCodeSnippet(currentAlgoId);
     }
 
@@ -328,6 +491,7 @@ document.addEventListener("DOMContentLoaded", () => {
             highlightCodeLine(null);
             explanationText.innerHTML = `🎉 <strong>Hoàn thành!</strong> Dãy số đã được sắp xếp tăng dần chính xác.`;
             renderBars(currentArray, currentArray.map((_, i) => i), "sorted");
+            updateScannerMachine([], "sorted", currentArray);
             generatorInstance = null; // Đánh dấu đã xong để lượt chạy tiếp theo tự reset mới
             return false;
         }
@@ -350,6 +514,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Cập nhật giao diện trực quan
         renderBars(currentArray, step.indices || [], step.type || "default");
+        updateScannerMachine(step.indices || [], step.type || "default", currentArray);
         highlightCodeLine(step.line);
         if (step.explanation) {
             explanationText.innerHTML = `👉 <strong>Bước ${stepsCount}:</strong> ${step.explanation}`;
@@ -454,7 +619,20 @@ document.addEventListener("DOMContentLoaded", () => {
     presetButtons.forEach(btn => {
         btn.addEventListener("click", () => {
             const presetKey = btn.dataset.preset;
+            if (presetKey === "big_100") {
+                openBigDataModal(100);
+                return;
+            }
+            if (presetKey === "big_1000") {
+                openBigDataModal(1000);
+                return;
+            }
+            if (presetKey === "big_10000") {
+                openBigDataModal(10000);
+                return;
+            }
             const presetVal = PRESETS[presetKey];
+            if (!presetVal) return;
             arrayInput.value = typeof presetVal === "function" ? presetVal() : presetVal;
             resetSimulation();
         });
@@ -726,8 +904,402 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // --------------------------------------------------------------------------
+    // 8. BIG DATA LAB MODAL CONTROLLER (100, 1,000, 10,000 PHẦN TỬ)
+    // --------------------------------------------------------------------------
+    const O_N2_ALGOS = [
+        "bubble_sort", "insertion_sort", "binary_insertion_sort", "selection_sort",
+        "cocktail_sort", "gnome_sort", "cycle_sort", "stooge_sort", "bogo_sort"
+    ];
+
+    function populateBigDataAlgoSelect() {
+        if (!bigDataAlgoSelect) return;
+        bigDataAlgoSelect.innerHTML = "";
+
+        const preferredOrder = [
+            "intro_sort", "quick_sort", "merge_sort", "heap_sort", "tim_sort",
+            "radix_sort", "counting_sort", "shell_sort", "bitonic_sort",
+            "comb_sort", "bucket_sort", "odd_even_sort", "cycle_sort", "pancake_sort",
+            "insertion_sort", "binary_insertion_sort", "selection_sort", "gnome_sort",
+            "cocktail_sort", "bubble_sort", "stooge_sort", "bogo_sort"
+        ];
+
+        preferredOrder.forEach(key => {
+            const algo = ALGORITHMS[key];
+            if (!algo) return;
+            const opt = document.createElement("option");
+            opt.value = key;
+            const prefix = key === "intro_sort" ? "👑 " : (O_N2_ALGOS.includes(key) ? "⚠️ " : "⚡ ");
+            opt.textContent = `${prefix}${algo.name} (${algo.complexity.avg})`;
+            if (key === "intro_sort") opt.selected = true;
+            bigDataAlgoSelect.appendChild(opt);
+        });
+    }
+
+    function openBigDataModal(count = 1000) {
+        pauseSimulation(); // Dừng mô phỏng thường nếu đang chạy
+        bigDataCount = count;
+        bigDataModal.classList.add("active");
+        bigDataHeading.textContent = `Mô phỏng ${count.toLocaleString()} phần tử`;
+        if (bigDataCountEl) {
+            bigDataCountEl.textContent = count.toLocaleString();
+        }
+
+        // Tự động gán gia tốc phù hợp theo số lượng
+        if (count <= 100) {
+            bigDataBatchSelect.value = "5";
+        } else if (count <= 1000) {
+            bigDataBatchSelect.value = "25";
+        } else {
+            bigDataBatchSelect.value = "100";
+        }
+
+        // Khởi tạo ngay lập tức trạng thái Big Data
+        resizeBigDataCanvas();
+        resetBigDataSimulation();
+    }
+
+    function generateBigDataArray(count) {
+        const arr = [];
+        const maxMag = count <= 100 ? 150 : (count <= 1000 ? 800 : 3000);
+        for (let i = 0; i < count; i++) {
+            const isNeg = Math.random() < 0.35;
+            const val = Math.floor(Math.random() * maxMag) + 1;
+            arr.push(isNeg ? -val : val);
+        }
+        return arr;
+    }
+
+    function resizeBigDataCanvas() {
+        if (!bigDataCanvas) return;
+        const rect = bigDataCanvas.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+        const dpr = window.devicePixelRatio || 1;
+        bigDataCanvas.width = Math.floor(rect.width * dpr);
+        bigDataCanvas.height = Math.floor(rect.height * dpr);
+    }
+
+    function drawBigDataCanvas(arr, activeIndices = [], type = "default") {
+        if (!bigDataCanvas || !arr || arr.length === 0) return;
+        const ctx = bigDataCanvas.getContext("2d");
+        const width = bigDataCanvas.width;
+        const height = bigDataCanvas.height;
+
+        // Xóa nền đen không gian công nghệ
+        ctx.fillStyle = "#080c12";
+        ctx.fillRect(0, 0, width, height);
+
+        const len = arr.length;
+        let minVal = Infinity;
+        let maxVal = -Infinity;
+        for (let i = 0; i < len; i++) {
+            const v = arr[i];
+            if (v < minVal) minVal = v;
+            if (v > maxVal) maxVal = v;
+        }
+
+        const hasNegative = minVal < 0;
+        const hasPositive = maxVal > 0;
+        let range = 1;
+        let zeroY = height;
+
+        const padTop = 32;
+        const padBottom = 28;
+        const usableH = Math.max(10, height - padTop - padBottom);
+
+        if (hasNegative && hasPositive) {
+            range = maxVal - minVal || 1;
+            zeroY = padTop + (maxVal / range) * usableH;
+        } else if (hasNegative) {
+            range = Math.abs(minVal) || 1;
+            zeroY = padTop;
+        } else {
+            range = maxVal || 1;
+            zeroY = height - padBottom;
+        }
+
+        // Vẽ đường trục 0 (Zero-axis baseline)
+        ctx.strokeStyle = "rgba(56, 139, 253, 0.4)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        ctx.moveTo(0, zeroY);
+        ctx.lineTo(width, zeroY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Vẽ nhãn trục 0
+        ctx.fillStyle = "rgba(56, 139, 253, 0.85)";
+        ctx.font = "12px JetBrains Mono, monospace";
+        ctx.fillText("0.0 (Trục số 0)", 12, zeroY - 6);
+
+        // Kích thước từng thanh
+        const barW = Math.max(1, width / len);
+        const activeSet = new Set(activeIndices);
+
+        const colPositive = type === "sorted" ? "#3fb950" : "#388bfd";
+        const colNegative = type === "sorted" ? "#2ea043" : "#e3b341";
+        const colCompare = "#58a6ff";
+        const colSwap = "#f85149";
+        const colPivot = "#a371f7";
+
+        for (let i = 0; i < len; i++) {
+            const val = arr[i];
+            const x = (i / len) * width;
+            const barH = Math.max(1, (Math.abs(val) / range) * usableH);
+            const barY = val >= 0 ? (zeroY - barH) : zeroY;
+
+            if (activeSet.has(i)) {
+                if (type === "swap") ctx.fillStyle = colSwap;
+                else if (type === "compare") ctx.fillStyle = colCompare;
+                else if (type === "pivot") ctx.fillStyle = colPivot;
+                else ctx.fillStyle = "#ffffff";
+            } else {
+                ctx.fillStyle = val >= 0 ? colPositive : colNegative;
+            }
+
+            if (barW <= 2.5) {
+                ctx.fillRect(x, barY, Math.max(1, barW), barH);
+            } else {
+                ctx.fillRect(x, barY, Math.max(1, barW - 1), barH);
+            }
+        }
+    }
+
+    function checkBigDataComplexityWarning(algoId, count) {
+        if (!bigDataWarning) return;
+        if (count >= 1000 && O_N2_ALGOS.includes(algoId)) {
+            if (algoId === "bogo_sort") {
+                bigDataWarning.innerHTML = `⚠️ <strong>Cảnh báo O(N!):</strong> BogoSort không thể chạy xong với ${count.toLocaleString()} phần tử!`;
+            } else if (algoId === "stooge_sort") {
+                bigDataWarning.innerHTML = `⚠️ <strong>Cảnh báo O(N<sup>2.71</sup>):</strong> StoogeSort cực kỳ chậm với N &ge; 1,000. Hãy tăng Gia tốc 500x hoặc chọn IntroSort!`;
+            } else {
+                bigDataWarning.innerHTML = `⚠️ <strong>Cảnh báo O(N²):</strong> Với ${count.toLocaleString()} phần tử, thuật toán này cần hàng chục triệu phép tính. Hãy chọn Gia tốc <strong>100x - 500x</strong> hoặc đổi sang <strong>IntroSort / QuickSort</strong>.`;
+            }
+            bigDataWarning.style.display = "block";
+        } else {
+            bigDataWarning.style.display = "none";
+        }
+    }
+
+    function renderFloatingCode(algoId) {
+        const algo = ALGORITHMS[algoId];
+        if (!algo || !algo.code) return;
+
+        floatingCodeTitle.textContent = `MÃ NGUỒN C++: ${algo.name.toUpperCase()}`;
+        floatingCodeContent.innerHTML = "";
+
+        algo.code.forEach((lineText, idx) => {
+            const lineDiv = document.createElement("div");
+            lineDiv.className = "floating-code-line";
+            lineDiv.id = `floatingCodeLine_${idx + 1}`;
+
+            const numSpan = document.createElement("span");
+            numSpan.style.color = "#6e7681";
+            numSpan.style.marginRight = "8px";
+            numSpan.textContent = idx + 1;
+
+            const textSpan = document.createElement("span");
+            textSpan.textContent = lineText;
+
+            lineDiv.appendChild(numSpan);
+            lineDiv.appendChild(textSpan);
+            floatingCodeContent.appendChild(lineDiv);
+        });
+    }
+
+    function highlightFloatingCodeLine(lineNumber) {
+        if (!floatingCodeContent) return;
+        const currentActive = floatingCodeContent.querySelector(".floating-code-line.active");
+        if (currentActive) currentActive.classList.remove("active");
+        if (!lineNumber) return;
+
+        const target = document.getElementById(`floatingCodeLine_${lineNumber}`);
+        if (target) {
+            target.classList.add("active");
+            const containerTop = floatingCodeContent.scrollTop;
+            const containerHeight = floatingCodeContent.clientHeight;
+            const targetTop = target.offsetTop - floatingCodeContent.offsetTop;
+            const targetHeight = target.offsetHeight;
+
+            if (targetTop < containerTop) {
+                floatingCodeContent.scrollTop = targetTop;
+            } else if (targetTop + targetHeight > containerTop + containerHeight) {
+                floatingCodeContent.scrollTop = targetTop + targetHeight - containerHeight;
+            }
+        }
+    }
+
+    function resetBigDataSimulation() {
+        pauseBigDataSimulation();
+        bigDataArray = generateBigDataArray(bigDataCount);
+        const algoId = bigDataAlgoSelect.value;
+        const algo = ALGORITHMS[algoId];
+
+        checkBigDataComplexityWarning(algoId, bigDataCount);
+
+        if (algo) {
+            bigDataGen = algo.generator([...bigDataArray]);
+        } else {
+            bigDataGen = null;
+        }
+
+        bigDataComparisons = 0;
+        bigDataSwaps = 0;
+        bigDataSteps = 0;
+
+        bigDataCountEl.textContent = bigDataCount.toLocaleString();
+        bigDataComparisonsEl.textContent = "0";
+        bigDataSwapsEl.textContent = "0";
+        bigDataStatusEl.textContent = "Sẵn sàng";
+        bigDataStatusEl.style.color = "var(--accent-cyan)";
+
+        renderFloatingCode(algoId);
+        drawBigDataCanvas(bigDataArray);
+    }
+
+    function playBigDataSimulation() {
+        if (!bigDataGen) {
+            resetBigDataSimulation();
+        }
+        if (bigDataIsPlaying) return;
+        bigDataIsPlaying = true;
+        bigPlayIcon.textContent = "⏸";
+        bigPlayText.textContent = "Tạm dừng";
+        btnBigDataPlay.classList.remove("btn-primary");
+        btnBigDataPlay.classList.add("btn-secondary");
+        bigDataStatusEl.textContent = "Đang chạy...";
+        bigDataStatusEl.style.color = "var(--accent-cyan)";
+
+        bigDataAnimationId = requestAnimationFrame(bigDataLoop);
+    }
+
+    function pauseBigDataSimulation() {
+        bigDataIsPlaying = false;
+        if (bigDataAnimationId) {
+            cancelAnimationFrame(bigDataAnimationId);
+            bigDataAnimationId = null;
+        }
+        bigPlayIcon.textContent = "▶";
+        bigPlayText.textContent = "Chạy siêu tốc";
+        btnBigDataPlay.classList.remove("btn-secondary");
+        btnBigDataPlay.classList.add("btn-primary");
+        if (bigDataStatusEl && bigDataStatusEl.textContent === "Đang chạy...") {
+            bigDataStatusEl.textContent = "Tạm dừng";
+            bigDataStatusEl.style.color = "var(--accent-amber)";
+        }
+    }
+
+    function bigDataLoop() {
+        if (!bigDataIsPlaying) return;
+
+        const batchSize = parseInt(bigDataBatchSelect.value, 10) || 25;
+        let lastStep = null;
+        let finished = false;
+
+        for (let k = 0; k < batchSize; k++) {
+            if (!bigDataGen) {
+                finished = true;
+                break;
+            }
+            const res = bigDataGen.next();
+            if (res.done) {
+                finished = true;
+                break;
+            }
+            lastStep = res.value;
+            bigDataSteps++;
+            if (lastStep.type === "compare") {
+                bigDataComparisons++;
+            } else if (lastStep.type === "swap") {
+                bigDataSwaps++;
+            }
+            if (lastStep.array) {
+                bigDataArray = lastStep.array;
+            }
+        }
+
+        bigDataComparisonsEl.textContent = bigDataComparisons.toLocaleString();
+        bigDataSwapsEl.textContent = bigDataSwaps.toLocaleString();
+
+        if (lastStep) {
+            drawBigDataCanvas(bigDataArray, lastStep.indices || [], lastStep.type || "default");
+            highlightFloatingCodeLine(lastStep.line);
+        }
+
+        if (finished) {
+            bigDataIsPlaying = false;
+            bigDataGen = null;
+            bigDataStatusEl.textContent = "Hoàn thành! ✅";
+            bigDataStatusEl.style.color = "var(--accent-green)";
+            bigPlayIcon.textContent = "🔄";
+            bigPlayText.textContent = "Chạy lại";
+            btnBigDataPlay.classList.remove("btn-secondary");
+            btnBigDataPlay.classList.add("btn-primary");
+            drawBigDataCanvas(bigDataArray, [], "sorted");
+            highlightFloatingCodeLine(null);
+            return;
+        }
+
+        bigDataAnimationId = requestAnimationFrame(bigDataLoop);
+    }
+
+    // Event listeners cho Big Data Lab
+    if (btnBigDataPlay) {
+        btnBigDataPlay.addEventListener("click", () => {
+            if (bigDataIsPlaying) {
+                pauseBigDataSimulation();
+            } else {
+                playBigDataSimulation();
+            }
+        });
+    }
+
+    if (btnBigDataReset) {
+        btnBigDataReset.addEventListener("click", () => {
+            resetBigDataSimulation();
+        });
+    }
+
+    if (bigDataAlgoSelect) {
+        bigDataAlgoSelect.addEventListener("change", () => {
+            resetBigDataSimulation();
+        });
+    }
+
+    if (btnBigDataClose) {
+        btnBigDataClose.addEventListener("click", () => {
+            pauseBigDataSimulation();
+            bigDataModal.classList.remove("active");
+        });
+    }
+
+    if (bigDataModal) {
+        bigDataModal.addEventListener("click", (e) => {
+            if (e.target === bigDataModal) {
+                pauseBigDataSimulation();
+                bigDataModal.classList.remove("active");
+            }
+        });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && bigDataModal && bigDataModal.classList.contains("active")) {
+            pauseBigDataSimulation();
+            bigDataModal.classList.remove("active");
+        }
+    });
+
+    window.addEventListener("resize", () => {
+        if (bigDataModal && bigDataModal.classList.contains("active")) {
+            resizeBigDataCanvas();
+            drawBigDataCanvas(bigDataArray);
+        }
+    });
+
+    // --------------------------------------------------------------------------
     // INITIALIZATION
     // --------------------------------------------------------------------------
+    populateBigDataAlgoSelect();
     renderEncyclopediaCards();
     resetSimulation();
 });

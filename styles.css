@@ -991,3 +991,321 @@ body {
     color: var(--text-secondary);
     margin-top: 40px;
 }
+
+
+/* ==============================================================================
+   CỖ MÁY ROBOT QUÉT NGANG (HORIZONTAL SCANNER MACHINE)
+   ============================================================================== */
+.btn-big-data {
+    background: linear-gradient(135deg, rgba(56, 139, 253, 0.15), rgba(137, 87, 229, 0.25)) !important;
+    border: 1px solid rgba(137, 87, 229, 0.6) !important;
+    color: #e2d9f8 !important;
+    font-weight: 700 !important;
+}
+.btn-big-data:hover {
+    background: linear-gradient(135deg, rgba(56, 139, 253, 0.3), rgba(137, 87, 229, 0.45)) !important;
+    border-color: var(--accent-cyan) !important;
+    box-shadow: 0 0 10px rgba(137, 87, 229, 0.5);
+}
+
+.scanner-machine {
+    position: absolute;
+    top: 6px;
+    height: 38px;
+    z-index: 60;
+    transition: left 0.18s cubic-bezier(0.25, 1, 0.5, 1), width 0.18s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.machine-hud {
+    background: rgba(13, 17, 23, 0.95);
+    border: 2px solid var(--accent-blue);
+    border-radius: 20px;
+    padding: 3px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    white-space: nowrap;
+    box-shadow: 0 0 14px rgba(56, 139, 253, 0.5);
+    transition: all 0.2s ease;
+}
+
+.machine-hud.status-error {
+    border-color: #f85149 !important;
+    background: rgba(35, 12, 14, 0.98) !important;
+    color: #ff7b72 !important;
+    box-shadow: 0 0 20px rgba(248, 81, 73, 0.8) !important;
+}
+
+.machine-hud.status-success {
+    border-color: #3fb950 !important;
+    background: rgba(12, 32, 18, 0.98) !important;
+    color: #7ee787 !important;
+    box-shadow: 0 0 20px rgba(63, 185, 80, 0.8) !important;
+}
+
+.machine-hud.status-swapping {
+    border-color: #e3b341 !important;
+    background: rgba(36, 28, 12, 0.98) !important;
+    color: #f2cc60 !important;
+    box-shadow: 0 0 22px rgba(227, 179, 65, 0.85) !important;
+    animation: machinePulse 0.2s infinite alternate;
+}
+
+.machine-hud.status-pivot {
+    border-color: #a371f7 !important;
+    background: rgba(28, 16, 45, 0.98) !important;
+    color: #d2a8ff !important;
+    box-shadow: 0 0 16px rgba(163, 113, 247, 0.7) !important;
+}
+
+.machine-hud.status-range {
+    border-color: var(--accent-cyan) !important;
+    background: rgba(10, 24, 32, 0.98) !important;
+    color: var(--accent-cyan) !important;
+    box-shadow: 0 0 14px rgba(57, 197, 207, 0.7) !important;
+}
+
+@keyframes machinePulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.04); }
+}
+
+.machine-arms-wrapper {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 320px;
+    pointer-events: none;
+}
+
+.machine-arm {
+    position: absolute;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(56, 139, 253, 0.9), transparent);
+    transition: left 0.18s ease;
+}
+.machine-arm.arm-left {
+    left: 0;
+}
+.machine-arm.arm-right {
+    right: 0;
+}
+
+.arm-gripper {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    color: var(--accent-cyan);
+    text-shadow: 0 0 6px var(--accent-cyan);
+}
+
+.machine-beam {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+    box-shadow: 0 0 8px rgba(57, 197, 207, 0.8);
+}
+
+/* ==============================================================================
+   BIG DATA LAB MODAL (100, 1,000, 10,000 PHẦN TỬ)
+   ============================================================================== */
+.big-data-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(10, 14, 20, 0.96);
+    backdrop-filter: blur(12px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.big-data-modal.active {
+    display: flex;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.big-data-container {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    width: 96vw;
+    height: 94vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+    position: relative;
+}
+
+.big-data-header {
+    background: var(--bg-surface-elevated);
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.big-data-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.big-data-badge {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+}
+.big-data-heading {
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.big-data-controls-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.big-data-select, .batch-select {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.batch-speed-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+.btn-close-big {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.15s;
+}
+.btn-close-big:hover {
+    color: #fff;
+    border-color: var(--accent-red);
+    background: rgba(248, 81, 73, 0.2);
+}
+
+.big-data-canvas-wrapper {
+    flex: 1;
+    position: relative;
+    background: #080c12;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#bigDataCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.big-data-warning {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(227, 179, 65, 0.15);
+    border: 1px solid var(--accent-amber);
+    color: #f2cc60;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    backdrop-filter: blur(8px);
+    z-index: 30;
+}
+
+.big-data-floating-corner {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 320px;
+    background: rgba(13, 17, 23, 0.92);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    padding: 12px;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.floating-telemetry {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+}
+.floating-telemetry strong {
+    color: var(--accent-cyan);
+}
+
+.floating-code-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.floating-code-title {
+    font-size: 0.7rem;
+    color: var(--accent-purple);
+    font-weight: 700;
+}
+.floating-code-content {
+    background: #06090e;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    max-height: 90px;
+    overflow-y: auto;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+.floating-code-line.active {
+    background: rgba(56, 139, 253, 0.25);
+    border-left: 2px solid var(--accent-cyan);
+    color: #fff;
+    font-weight: 700;
+}
