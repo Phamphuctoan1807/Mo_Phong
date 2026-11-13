@@ -140,6 +140,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let compareTimerId = null;
     let doneA = false;
     let doneB = false;
+    let failedA = false;
+    let failedB = false;
     let compCountA = 0, swapCountA = 0, stepCountA = 0, timeCountA = 0;
     let compCountB = 0, swapCountB = 0, stepCountB = 0, timeCountB = 0;
     let compareStartTime = 0;
@@ -216,11 +218,12 @@ document.addEventListener("DOMContentLoaded", () => {
             col.dataset.index = idx;
 
             // Đánh dấu trạng thái tương tác
-            if (activeIndices.includes(idx)) {
+            if (activeIndices.includes(idx) || type === "error") {
                 if (type === "compare") col.classList.add("comparing");
                 else if (type === "swap") col.classList.add("swapping");
                 else if (type === "pivot") col.classList.add("pivot");
                 else if (type === "sorted") col.classList.add("sorted");
+                else if (type === "error") col.classList.add("error");
             }
 
             const barBody = document.createElement("div");
@@ -292,6 +295,23 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (machineArmLeft) machineArmLeft.style.background = "linear-gradient(180deg, #3fb950, transparent)";
             if (machineArmRight) machineArmRight.style.background = "linear-gradient(180deg, #3fb950, transparent)";
+            return;
+        }
+
+        if (type === "error") {
+            scannerMachine.style.opacity = "1";
+            scannerMachine.style.left = "50%";
+            scannerMachine.style.transform = "translateX(-50%)";
+            scannerMachine.style.width = "380px";
+            machineHud.className = "machine-hud status-error";
+            machineIcon.textContent = "🛑";
+            machineMsg.innerHTML = `<strong>DỪNG (STOP):</strong> Xác suất 1/N! quá nhỏ, thuật toán thất bại!`;
+            if (machineBeam) {
+                machineBeam.style.background = "linear-gradient(90deg, #f85149, #da3633)";
+                machineBeam.style.boxShadow = "0 0 16px rgba(248, 81, 73, 0.9)";
+            }
+            if (machineArmLeft) machineArmLeft.style.background = "linear-gradient(180deg, #f85149, transparent)";
+            if (machineArmRight) machineArmRight.style.background = "linear-gradient(180deg, #f85149, transparent)";
             return;
         }
 
@@ -574,6 +594,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         updateVariableWatcher(step.vars);
 
+        if (step.type === "error") {
+            pauseSimulation();
+            generatorInstance = null;
+            return false;
+        }
+
         return true;
     }
 
@@ -666,7 +692,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             return arr.join(", ");
         },
-        duplicates: "15, -10, 25, 15, -10, 40, 25, 15, -10, 50, 40, -10"
+        duplicates: "15, -10, 25, 15, -10, 40, 25, 15, -10, 50, 40, -10",
+        bogo_safe: "4, 2, 7, 1"
     };
 
     presetButtons.forEach(btn => {
@@ -1371,7 +1398,8 @@ document.addEventListener("DOMContentLoaded", () => {
         reversed: "92, 80, 68, 55, 42, 30, 18, 5, -8, -20, -35, -48, -60",
         nearly_sorted: "-35, -20, -8, 2, 14, 25, 20, 36, 48, 60, 56, 75, 88",
         duplicates: "25, -12, 40, 25, -12, 50, 25, -12, 40, 50, -12, 25, 40",
-        neg_float: "-18.5, 45, -7.2, 0, 82.4, -12, 29.5, 8.8, -30, 64, 15, -4.5"
+        neg_float: "-18.5, 45, -7.2, 0, 82.4, -12, 29.5, 8.8, -30, 64, 15, -4.5",
+        bogo_safe: "4, 2, 7, 1"
     };
 
     function parseCompareArrayInput() {
@@ -1462,11 +1490,12 @@ document.addEventListener("DOMContentLoaded", () => {
             col.className = "bar-col";
             col.dataset.index = idx;
 
-            if (activeIndices.includes(idx)) {
+            if (activeIndices.includes(idx) || type === "error") {
                 if (type === "compare") col.classList.add("comparing");
                 else if (type === "swap") col.classList.add("swapping");
                 else if (type === "pivot") col.classList.add("pivot");
                 else if (type === "sorted") col.classList.add("sorted");
+                else if (type === "error") col.classList.add("error");
             }
 
             const barBody = document.createElement("div");
@@ -1534,6 +1563,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         doneA = false;
         doneB = false;
+        failedA = false;
+        failedB = false;
         compCountA = 0; swapCountA = 0; stepCountA = 0; timeCountA = 0;
         compCountB = 0; swapCountB = 0; stepCountB = 0; timeCountB = 0;
         compareStartTime = 0;
@@ -1585,20 +1616,26 @@ document.addEventListener("DOMContentLoaded", () => {
             const nextA = genA.next();
             if (nextA.done) {
                 doneA = true;
-                if (timeCountA === 0) {
-                    timeCountA = Math.max(1, performance.now() - compareStartTime);
-                }
-                fighterTimeA.textContent = `${timeCountA.toFixed(1)} ms`;
-                renderCompareBars(compareBarsA, compareArrayA, compareArrayA.map((_, i) => i), "sorted");
-                fighterExplainA.textContent = `🎉 Hoàn thành sắp xếp! (${timeCountA.toFixed(1)} ms)`;
+                if (!failedA) {
+                    if (timeCountA === 0) {
+                        timeCountA = Math.max(1, performance.now() - compareStartTime);
+                    }
+                    fighterTimeA.textContent = `${timeCountA.toFixed(1)} ms`;
+                    renderCompareBars(compareBarsA, compareArrayA, compareArrayA.map((_, i) => i), "sorted");
+                    fighterExplainA.textContent = `🎉 Hoàn thành sắp xếp! (${timeCountA.toFixed(1)} ms)`;
 
-                if (!doneB && !hasAnnouncedWinner) {
-                    hasAnnouncedWinner = true;
-                    fighterStatusA.className = "fighter-status-badge winner";
-                    fighterStatusA.textContent = `🥇 Về đích trước (${timeCountA.toFixed(1)} ms)!`;
-                } else {
-                    fighterStatusA.className = "fighter-status-badge finished";
-                    fighterStatusA.textContent = `Hoàn thành (${timeCountA.toFixed(1)} ms)`;
+                    if (!doneB && !hasAnnouncedWinner) {
+                        hasAnnouncedWinner = true;
+                        fighterStatusA.className = "fighter-status-badge winner";
+                        fighterStatusA.textContent = `🥇 Về đích trước (${timeCountA.toFixed(1)} ms)!`;
+                    } else if (doneB && failedB && !hasAnnouncedWinner) {
+                        hasAnnouncedWinner = true;
+                        fighterStatusA.className = "fighter-status-badge winner";
+                        fighterStatusA.textContent = `🥇 Chiến thắng (${timeCountA.toFixed(1)} ms)!`;
+                    } else {
+                        fighterStatusA.className = "fighter-status-badge finished";
+                        fighterStatusA.textContent = `Hoàn thành (${timeCountA.toFixed(1)} ms)`;
+                    }
                 }
             } else {
                 const step = nextA.value;
@@ -1616,9 +1653,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 timeCountA = performance.now() - compareStartTime;
                 fighterTimeA.textContent = `${timeCountA.toFixed(1)} ms`;
-                renderCompareBars(compareBarsA, compareArrayA, step.indices || [], step.type || "default");
-                if (step.explanation) {
+
+                if (step.type === "error") {
+                    failedA = true;
+                    doneA = true;
+                    fighterStatusA.className = "fighter-status-badge failed";
+                    fighterStatusA.textContent = `🛑 Dừng (STOP)`;
                     fighterExplainA.textContent = step.explanation;
+                    renderCompareBars(compareBarsA, compareArrayA, [], "error");
+                } else {
+                    renderCompareBars(compareBarsA, compareArrayA, step.indices || [], step.type || "default");
+                    if (step.explanation) {
+                        fighterExplainA.textContent = step.explanation;
+                    }
                 }
             }
         }
@@ -1628,20 +1675,26 @@ document.addEventListener("DOMContentLoaded", () => {
             const nextB = genB.next();
             if (nextB.done) {
                 doneB = true;
-                if (timeCountB === 0) {
-                    timeCountB = Math.max(1, performance.now() - compareStartTime);
-                }
-                fighterTimeB.textContent = `${timeCountB.toFixed(1)} ms`;
-                renderCompareBars(compareBarsB, compareArrayB, compareArrayB.map((_, i) => i), "sorted");
-                fighterExplainB.textContent = `🎉 Hoàn thành sắp xếp! (${timeCountB.toFixed(1)} ms)`;
+                if (!failedB) {
+                    if (timeCountB === 0) {
+                        timeCountB = Math.max(1, performance.now() - compareStartTime);
+                    }
+                    fighterTimeB.textContent = `${timeCountB.toFixed(1)} ms`;
+                    renderCompareBars(compareBarsB, compareArrayB, compareArrayB.map((_, i) => i), "sorted");
+                    fighterExplainB.textContent = `🎉 Hoàn thành sắp xếp! (${timeCountB.toFixed(1)} ms)`;
 
-                if (!doneA && !hasAnnouncedWinner) {
-                    hasAnnouncedWinner = true;
-                    fighterStatusB.className = "fighter-status-badge winner";
-                    fighterStatusB.textContent = `🥇 Về đích trước (${timeCountB.toFixed(1)} ms)!`;
-                } else {
-                    fighterStatusB.className = "fighter-status-badge finished";
-                    fighterStatusB.textContent = `Hoàn thành (${timeCountB.toFixed(1)} ms)`;
+                    if (!doneA && !hasAnnouncedWinner) {
+                        hasAnnouncedWinner = true;
+                        fighterStatusB.className = "fighter-status-badge winner";
+                        fighterStatusB.textContent = `🥇 Về đích trước (${timeCountB.toFixed(1)} ms)!`;
+                    } else if (doneA && failedA && !hasAnnouncedWinner) {
+                        hasAnnouncedWinner = true;
+                        fighterStatusB.className = "fighter-status-badge winner";
+                        fighterStatusB.textContent = `🥇 Chiến thắng (${timeCountB.toFixed(1)} ms)!`;
+                    } else {
+                        fighterStatusB.className = "fighter-status-badge finished";
+                        fighterStatusB.textContent = `Hoàn thành (${timeCountB.toFixed(1)} ms)`;
+                    }
                 }
             } else {
                 const step = nextB.value;
@@ -1659,9 +1712,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 timeCountB = performance.now() - compareStartTime;
                 fighterTimeB.textContent = `${timeCountB.toFixed(1)} ms`;
-                renderCompareBars(compareBarsB, compareArrayB, step.indices || [], step.type || "default");
-                if (step.explanation) {
+
+                if (step.type === "error") {
+                    failedB = true;
+                    doneB = true;
+                    fighterStatusB.className = "fighter-status-badge failed";
+                    fighterStatusB.textContent = `🛑 Dừng (STOP)`;
                     fighterExplainB.textContent = step.explanation;
+                    renderCompareBars(compareBarsB, compareArrayB, [], "error");
+                } else {
+                    renderCompareBars(compareBarsB, compareArrayB, step.indices || [], step.type || "default");
+                    if (step.explanation) {
+                        fighterExplainB.textContent = step.explanation;
+                    }
                 }
             }
         }
@@ -1844,10 +1907,19 @@ document.addEventListener("DOMContentLoaded", () => {
         if (thAlgoA) thAlgoA.textContent = algoA.name;
         if (thAlgoB) thAlgoB.textContent = algoB.name;
 
-        // Xác định bên thắng dựa trên thời gian và tổng số bước
+        // Xác định bên thắng dựa trên thời gian, trạng thái thất bại và tổng số bước
         let winner = "tie";
-        if (stepCountA < stepCountB) winner = "A";
-        else if (stepCountB < stepCountA) winner = "B";
+        if (failedA && !failedB) {
+            winner = "B";
+        } else if (failedB && !failedA) {
+            winner = "A";
+        } else if (failedA && failedB) {
+            winner = "tie";
+        } else if (stepCountA < stepCountB) {
+            winner = "A";
+        } else if (stepCountB < stepCountA) {
+            winner = "B";
+        }
 
         const maxSteps = Math.max(stepCountA, stepCountB) || 1;
         const minSteps = Math.min(stepCountA, stepCountB) || 1;
@@ -1873,32 +1945,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Hiển thị Winner Announcement banner
         if (winner === "A") {
+            const extraNote = failedB
+                ? `Đối thủ <strong>${algoB.name}</strong> đã thất bại hoặc bị cưỡng chế dừng lại (STOP) do bùng nổ độ phức tạp O(N!)!`
+                : `Về đích trước với ${timeCountA.toFixed(1)} ms &bull; Nhanh gấp <strong>${stepRatio}x</strong> về số bước thao tác so với ${algoB.name} (tiết kiệm ${stepPct}%).`;
             winnerAnnouncement.innerHTML = `
                 <span class="winner-icon">🏆</span>
                 <div>
                     <div>CHIẾN THẮNG TUYỆT ĐỐI: <span style="color:#7ee787;">${algoA.name}</span></div>
                     <div style="font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); margin-top: 4px;">
-                        Về đích trước với ${timeCountA.toFixed(1)} ms &bull; Nhanh gấp <strong>${stepRatio}x</strong> về số bước thao tác so với ${algoB.name} (tiết kiệm ${stepPct}%).
+                        ${extraNote}
                     </div>
                 </div>
             `;
         } else if (winner === "B") {
+            const extraNote = failedA
+                ? `Đối thủ <strong>${algoA.name}</strong> đã thất bại hoặc bị cưỡng chế dừng lại (STOP) do bùng nổ độ phức tạp O(N!)!`
+                : `Về đích trước với ${timeCountB.toFixed(1)} ms &bull; Nhanh gấp <strong>${stepRatio}x</strong> về số bước thao tác so với ${algoA.name} (tiết kiệm ${stepPct}%).`;
             winnerAnnouncement.innerHTML = `
                 <span class="winner-icon">🏆</span>
                 <div>
                     <div>CHIẾN THẮNG TUYỆT ĐỐI: <span style="color:#7ee787;">${algoB.name}</span></div>
                     <div style="font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); margin-top: 4px;">
-                        Về đích trước với ${timeCountB.toFixed(1)} ms &bull; Nhanh gấp <strong>${stepRatio}x</strong> về số bước thao tác so với ${algoA.name} (tiết kiệm ${stepPct}%).
+                        ${extraNote}
                     </div>
                 </div>
             `;
         } else {
+            const extraNote = (failedA && failedB)
+                ? `Cả hai thuật toán đều thất bại hoặc bị dừng do vượt quá ngưỡng an toàn!`
+                : `Cả hai thuật toán có tổng số bước và hiệu năng gần như tương đương trên tập dữ liệu này.`;
             winnerAnnouncement.innerHTML = `
-                <span class="winner-icon">🤝</span>
+                <span class="winner-icon">${(failedA && failedB) ? "🛑" : "🤝"}</span>
                 <div>
-                    <div>KẾT QUẢ: <span style="color:var(--accent-cyan);">HÒA NHAU</span></div>
+                    <div>KẾT QUẢ: <span style="color:var(--accent-cyan);">${(failedA && failedB) ? "CẢ HAI ĐỀU DỪNG" : "HÒA NHAU"}</span></div>
                     <div style="font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); margin-top: 4px;">
-                        Cả hai thuật toán có tổng số bước và hiệu năng gần như tương đương trên tập dữ liệu này.
+                        ${extraNote}
                     </div>
                 </div>
             `;
@@ -1906,6 +1987,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Tạo các hàng trong bảng so sánh
         const rows = [
+            {
+                metric: "Trạng thái hoàn thành",
+                valA: failedA ? `<span style="color:#f85149; font-weight:700;">🛑 Dừng (Thất bại)</span>` : `<span style="color:#7ee787; font-weight:700;">✅ Thành công</span>`,
+                valB: failedB ? `<span style="color:#f85149; font-weight:700;">🛑 Dừng (Thất bại)</span>` : `<span style="color:#7ee787; font-weight:700;">✅ Thành công</span>`,
+                win: failedA && !failedB ? "B" : (failedB && !failedA ? "A" : "none"),
+                diff: (failedA || failedB) ? "Bùng nổ O(N!)" : "Cả hai đều sắp xếp đúng"
+            },
             {
                 metric: "Thời gian hoàn thành (ms)",
                 valA: `${timeCountA.toFixed(1)} ms`,

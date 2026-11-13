@@ -1140,9 +1140,13 @@ const ALGORITHMS = {
             let soPhanTu = a.length;
             let soLuotThu = 0;
 
-            // Với mảng rất nhỏ (N <= 5), xác suất tìm ra hoán vị đúng là khả thi (vài trăm lượt).
-            // Với N >= 6, N! bùng nổ (6! = 720, 10! = 3.6 triệu, 100! = 10^157), cần giới hạn ngẫu nhiên an toàn.
-            const maxLuot = soPhanTu <= 4 ? 400 : (soPhanTu <= 5 ? 1200 : (Math.floor(Math.random() * 15) + 12));
+            // Ngưỡng an toàn toán học:
+            // N <= 5: Xác suất 1/N! là khả thi (N=3: 1/6, N=4: 1/24, N=5: 1/120)
+            // Cho phép chạy ngẫu nhiên 100% (auto ngẫu nhiên) đến khi tự sắp xếp thành công!
+            // N >= 6: N! bùng nổ (6! = 720, 7! = 5.040, 10! = 3.6 triệu, 100! = 10^157)
+            // Chỉ xáo trộn vài lượt minh họa rồi kích hoạt STOP, báo THẤT BẠI trung thực.
+            const laMucAnToan = soPhanTu <= 5;
+            const maxLuot = laMucAnToan ? 3000 : (Math.floor(Math.random() * 5) + 6);
 
             let daXepXong = false;
 
@@ -1207,19 +1211,18 @@ const ALGORITHMS = {
             if (daXepXong) {
                 yield {
                     line: 12,
-                    explanation: `🎉 Thật kỳ diệu! Mảng đã tình cờ được sắp xếp đúng sau ${soLuotThu} lượt thử ngẫu nhiên!`,
+                    explanation: `🎉 KỲ DIỆU! BogoSort đã tình cờ sắp xếp đúng mảng sau ${soLuotThu} lượt thử ngẫu nhiên!`,
                     indices: a.map((_, i) => i),
                     type: 'sorted',
                     array: [...a],
                     vars: { soLuotThu }
                 };
             } else {
-                a.sort((x, y) => x - y);
                 yield {
                     line: 12,
-                    explanation: `⚠️ Dừng lại sau ${soLuotThu} lượt xáo trộn! Với N = ${soPhanTu}, xác suất sắp xếp đúng ngẫu nhiên là 1/${soPhanTu}! (xấp xỉ 0). Cưỡng chế sắp xếp để kết thúc mô phỏng.`,
-                    indices: a.map((_, i) => i),
-                    type: 'sorted',
+                    explanation: `🛑 BOGOSORT THẤT BẠI (STOP): Đã dừng sau ${soLuotThu} lượt thử! Với N = ${soPhanTu}, xác suất thành công là 1/${soPhanTu}! (xấp xỉ 0). Thuật toán dừng lại vì không thể hoàn thành ngẫu nhiên trong thực tế!`,
+                    indices: [],
+                    type: 'error',
                     array: [...a],
                     vars: { soLuotThu }
                 };
