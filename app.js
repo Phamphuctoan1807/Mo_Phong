@@ -221,6 +221,37 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Bảng chuyển đổi nhãn biến sang Tiếng Việt có dấu trực quan
+    const VIETNAMESE_VAR_LABELS = {
+        dau: "đầu",
+        cuoi: "cuối",
+        chot: "chốt",
+        viTriChot: "vị_trí_chốt",
+        trai: "trái",
+        phai: "phải",
+        giua: "giữa",
+        phanTuChon: "phần_tử_chọn",
+        lonNhat: "lớn_nhất",
+        conTrai: "con_trái",
+        conPhai: "con_phải",
+        kichThuoc: "kích_thước",
+        giaTriChen: "giá_trị_chèn",
+        viTriChen: "vị_trí_chèn",
+        viTriNhoNhat: "vị_trí_nhỏ_nhất",
+        viTriDaChot: "vị_trí_đã_chốt",
+        daHoanDoi: "đã_đổi_chỗ",
+        khoangCach: "khoảng_cách",
+        tamThoi: "tạm_thời",
+        viTriDat: "vị_trí_đặt",
+        viTri: "vị_trí",
+        soLuongThung: "số_thùng",
+        thungSo: "thùng_số",
+        khoangDem: "khoảng_đếm",
+        hangChuSo: "hàng_số",
+        doLechAm: "độ_lệch_âm",
+        soLuotThu: "lượt_thử"
+    };
+
     function updateVariableWatcher(varsObj) {
         varWatcher.innerHTML = `<span style="color: var(--text-muted); align-self: center;">Biến theo dõi:</span>`;
         if (!varsObj || Object.keys(varsObj).length === 0) {
@@ -230,7 +261,9 @@ document.addEventListener("DOMContentLoaded", () => {
         for (const [key, val] of Object.entries(varsObj)) {
             const pill = document.createElement("div");
             pill.className = "var-pill";
-            pill.innerHTML = `<strong>${key}</strong> = ${typeof val === 'number' ? (Number.isInteger(val) ? val : val.toFixed(2)) : val}`;
+            const viLabel = VIETNAMESE_VAR_LABELS[key] || key;
+            const displayVal = typeof val === 'number' ? (Number.isInteger(val) ? val : val.toFixed(2)) : val;
+            pill.innerHTML = `<strong>${viLabel}</strong> = ${displayVal}`;
             varWatcher.appendChild(pill);
         }
     }
