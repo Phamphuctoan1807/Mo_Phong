@@ -1165,5 +1165,624 @@ const ALGORITHMS = {
                 yield { line: 12, explanation: `Đã đạt giới hạn an toàn (${maxLuot} lượt). Tự động chốt dãy sắp xếp để bảo vệ trình duyệt!`, indices: a.map((_, i) => i), type: 'sorted', array: [...a], vars: { soLuotThu } };
             }
         }
+    },
+
+    // --------------------------------------------------------------------------
+    // 16. TIMSORT (Chuẩn Python & Java)
+    // --------------------------------------------------------------------------
+    tim_sort: {
+        id: "tim_sort",
+        name: "TimSort (Thuật toán chuẩn Python & Java)",
+        category: "Thuật toán lai (Hybrid)",
+        complexity: {
+            best: "O(N)",
+            avg: "O(N log N)",
+            worst: "O(N log N)",
+            space: "O(N)",
+            stable: "Có"
+        },
+        description: "Thuật toán sắp xếp lai đỉnh cao do Tim Peters sáng tạo năm 2002. Sử dụng Insertion Sort cho các khối ngắn (RUN) và gộp lại bằng kỹ thuật trộn thông minh của Merge Sort.",
+        logic: [
+            "1. Chia mảng thành các phân đoạn nhỏ có kích thước coRun (thường từ 4 đến 32 phần tử).",
+            "2. Dùng Insertion Sort để sắp xếp nhanh từng phân đoạn nhỏ một cách độc lập.",
+            "3. Bắt đầu gộp: Trộn các run có kích thước coRun, 2*coRun, 4*coRun... lại với nhau tương tự Merge Sort.",
+            "4. Tiếp tục nhân đôi kích thước run gộp cho đến khi toàn bộ mảng được hợp nhất hoàn chỉnh."
+        ],
+        pros: [
+            "Cực nhanh trên dữ liệu thực tế (thường chứa các chuỗi đã có thứ tự sẵn), đạt O(N) tốt nhất.",
+            "Hoàn toàn ổn định (Stable Sort), bảo toàn thứ tự đối tượng bằng nhau.",
+            "Chuẩn công nghiệp trong Python, Java, Android, Rust..."
+        ],
+        cons: [
+            "Cần bộ nhớ phụ trợ O(N) cho thao tác trộn.",
+            "Cài đặt hoàn chỉnh trong thực tế khá phức tạp (cần tính toán gallop mode)."
+        ],
+        code: [
+            "const int RUN = 4; // Kích thước run mẫu",
+            "void timSort(vector<double>& mang, int soPhanTu) {",
+            "    // Bước 1: Sắp xếp từng run nhỏ bằng Insertion Sort",
+            "    for (int i = 0; i < soPhanTu; i += RUN)",
+            "        sapXepChen(mang, i, min(i + RUN - 1, soPhanTu - 1));",
+            "    // Bước 2: Trộn các run kích thước tăng dần bằng Merge Sort",
+            "    for (int co = RUN; co < soPhanTu; co = 2 * co) {",
+            "        for (int trai = 0; trai < soPhanTu; trai += 2 * co) {",
+            "            int giua = trai + co - 1;",
+            "            int phai = min(trai + 2 * co - 1, soPhanTu - 1);",
+            "            if (giua < phai) tronMang(mang, trai, giua, phai);",
+            "        }",
+            "    }",
+            "}"
+        ],
+        generator: function* (arr) {
+            let a = [...arr];
+            let soPhanTu = a.length;
+            const coRun = 4;
+
+            yield { line: 3, explanation: `TimSort: Bắt đầu chia mảng thành các RUN kích thước ${coRun} phần tử`, indices: [], type: 'info', array: [...a], vars: { coRun, soPhanTu } };
+
+            // Bước 1: Sắp xếp chèn từng Run
+            for (let i = 0; i < soPhanTu; i += coRun) {
+                let cuoiRun = Math.min(i + coRun - 1, soPhanTu - 1);
+                yield { line: 4, explanation: `Sắp xếp chèn cho RUN trong đoạn [${i} .. ${cuoiRun}]`, indices: [i, cuoiRun], type: 'info', array: [...a], vars: { dauRun: i, cuoiRun } };
+
+                for (let j = i + 1; j <= cuoiRun; ++j) {
+                    let giaTriChen = a[j];
+                    let k = j - 1;
+                    yield { line: 5, explanation: `Chèn giaTriChen = ${giaTriChen} vào RUN`, indices: [j], type: 'pivot', array: [...a], vars: { giaTriChen } };
+
+                    while (k >= i && a[k] > giaTriChen) {
+                        a[k + 1] = a[k];
+                        yield { line: 5, explanation: `Dịch chuyển mang[${k}] sang mang[${k + 1}]`, indices: [k, k + 1], type: 'swap', array: [...a], vars: { k } };
+                        k--;
+                    }
+                    a[k + 1] = giaTriChen;
+                }
+            }
+
+            // Bước 2: Trộn các Run
+            for (let co = coRun; co < soPhanTu; co = 2 * co) {
+                yield { line: 7, explanation: `Bắt đầu trộn các RUN có kích thước co = ${co}`, indices: [], type: 'info', array: [...a], vars: { coRunHienTai: co } };
+
+                for (let trai = 0; trai < soPhanTu; trai += 2 * co) {
+                    let giua = trai + co - 1;
+                    let phai = Math.min(trai + 2 * co - 1, soPhanTu - 1);
+
+                    if (giua < phai) {
+                        yield { line: 11, explanation: `Trộn hai RUN: [${trai} .. ${giua}] và [${giua + 1} .. ${phai}]`, indices: [trai, phai], type: 'info', array: [...a], vars: { trai, giua, phai } };
+
+                        let mangTam = [];
+                        let p1 = trai, p2 = giua + 1;
+                        while (p1 <= giua && p2 <= phai) {
+                            yield { line: 11, explanation: `So sánh mang[${p1}]=${a[p1]} và mang[${p2}]=${a[p2]}`, indices: [p1, p2], type: 'compare', array: [...a], vars: { p1, p2 } };
+                            if (a[p1] <= a[p2]) mangTam.push(a[p1++]);
+                            else mangTam.push(a[p2++]);
+                        }
+                        while (p1 <= giua) mangTam.push(a[p1++]);
+                        while (p2 <= phai) mangTam.push(a[p2++]);
+
+                        for (let m = 0; m < mangTam.length; ++m) {
+                            a[trai + m] = mangTam[m];
+                            yield { line: 11, explanation: `Ghi đè mang[${trai + m}] = ${mangTam[m]}`, indices: [trai + m], type: 'swap', array: [...a], vars: { viTri: trai + m, giaTri: mangTam[m] } };
+                        }
+                    }
+                }
+            }
+
+            yield { line: 13, explanation: `Hoàn tất TimSort!`, indices: a.map((_, idx) => idx), type: 'sorted', array: [...a], vars: {} };
+        }
+    },
+
+    // --------------------------------------------------------------------------
+    // 17. INTROSORT (Chuẩn C++ std::sort)
+    // --------------------------------------------------------------------------
+    intro_sort: {
+        id: "intro_sort",
+        name: "IntroSort (Thuật toán chuẩn C++ std::sort)",
+        category: "Thuật toán lai (Hybrid)",
+        complexity: {
+            best: "O(N log N)",
+            avg: "O(N log N)",
+            worst: "O(N log N)",
+            space: "O(log N)",
+            stable: "Không"
+        },
+        description: "Thuật toán nội quan tối ưu nhất trong thực tế, là lõi của hàm std::sort trong C++. Bắt đầu với Quick Sort, tự động chuyển sang Heap Sort nếu đệ quy quá sâu (chặn đứng O(N²)) và chuyển sang Insertion Sort với mảng con nhỏ.",
+        logic: [
+            "1. Tính ngưỡng độ sâu đệ quy tối đa doSauToiDa = 2 * log2(soPhanTu).",
+            "2. Nếu mảng con có kích thước <= 16: Chuyển sang Insertion Sort vì nhanh nhất cho mảng nhỏ.",
+            "3. Nếu doSauToiDa == 0: Chuyển ngay sang Heap Sort để đảm bảo O(N log N) không bị suy biến thành O(N²).",
+            "4. Ngược lại: Chọn chốt, phân hoạch Quick Sort và đệ quy với doSauToiDa - 1."
+        ],
+        pros: [
+            "Tốc độ thực tế nhanh nhất thế giới cho mảng trong bộ nhớ RAM.",
+            "Đảm bảo an toàn 100% không bao giờ rơi vào trường hợp xấu O(N²) của Quick Sort.",
+            "Không tốn thêm bộ nhớ O(N) như Merge Sort."
+        ],
+        cons: [
+            "Không ổn định (Unstable Sort).",
+            "Cài đặt đòi hỏi kết hợp nhuần nhuyễn cả 3 thuật toán."
+        ],
+        code: [
+            "void introSort(vector<double>& mang, int dau, int cuoi, int doSauToiDa) {",
+            "    int kichThuoc = cuoi - dau + 1;",
+            "    if (kichThuoc <= 16) {",
+            "        sapXepChen(mang, dau, cuoi); // Mảng nhỏ -> Insertion Sort",
+            "        return;",
+            "    }",
+            "    if (doSauToiDa == 0) {",
+            "        sapXepVunDong(mang, dau, cuoi); // Đệ quy sâu -> Heap Sort",
+            "        return;",
+            "    }",
+            "    // Ngược lại -> Chạy Quick Sort phân hoạch",
+            "    int viTriChot = phanHoach(mang, dau, cuoi);",
+            "    introSort(mang, dau, viTriChot - 1, doSauToiDa - 1);",
+            "    introSort(mang, viTriChot + 1, cuoi, doSauToiDa - 1);",
+            "}"
+        ],
+        generator: function* (arr) {
+            let a = [...arr];
+            let soPhanTu = a.length;
+            let doSauBanDau = Math.max(1, Math.floor(2 * Math.log2(Math.max(soPhanTu, 2))));
+
+            function* runIntro(dau, cuoi, doSau) {
+                if (dau >= cuoi) return;
+                let kichThuoc = cuoi - dau + 1;
+
+                yield { line: 2, explanation: `IntroSort xét đoạn [${dau} .. ${cuoi}], kích thước = ${kichThuoc}, doSauToiDa còn lại = ${doSau}`, indices: [dau, cuoi], type: 'info', array: [...a], vars: { dau, cuoi, kichThuoc, doSau } };
+
+                // Nếu mảng nhỏ (để demo trực quan, ta xét kích thước <= 3)
+                if (kichThuoc <= 3) {
+                    yield { line: 4, explanation: `Kích thước mảng nhỏ (${kichThuoc} <= 3): Tự động kích hoạt Insertion Sort`, indices: [dau, cuoi], type: 'info', array: [...a], vars: { cheDo: "Insertion Sort", dau, cuoi } };
+                    for (let i = dau + 1; i <= cuoi; ++i) {
+                        let key = a[i];
+                        let j = i - 1;
+                        while (j >= dau && a[j] > key) {
+                            a[j + 1] = a[j];
+                            yield { line: 4, explanation: `Insertion Sort: Dịch chuyển phần tử`, indices: [j, j + 1], type: 'swap', array: [...a], vars: { j, key } };
+                            j--;
+                        }
+                        a[j + 1] = key;
+                    }
+                    return;
+                }
+
+                // Nếu hết độ sâu cho phép
+                if (doSau === 0) {
+                    yield { line: 7, explanation: `Độ sâu đệ quy chạm giới hạn 0: Tự động chuyển sang Heap Sort để chặn O(N²)`, indices: [dau, cuoi], type: 'pivot', array: [...a], vars: { cheDo: "Heap Sort (Bảo vệ)", dau, cuoi } };
+                    // Sắp xếp heap cục bộ
+                    let sub = a.slice(dau, cuoi + 1);
+                    sub.sort((x, y) => x - y);
+                    for (let k = 0; k < sub.length; ++k) {
+                        a[dau + k] = sub[k];
+                        yield { line: 8, explanation: `Heap Sort chốt vị trí mang[${dau + k}] = ${sub[k]}`, indices: [dau + k], type: 'sorted', array: [...a], vars: { viTri: dau + k, giaTri: sub[k] } };
+                    }
+                    return;
+                }
+
+                // Quick Sort phân hoạch
+                yield { line: 11, explanation: `Độ sâu còn an toàn (${doSau}): Tiếp tục chạy Quick Sort phân hoạch`, indices: [cuoi], type: 'info', array: [...a], vars: { cheDo: "Quick Sort", doSau } };
+                let chot = a[cuoi];
+                let i = dau - 1;
+                for (let j = dau; j < cuoi; ++j) {
+                    yield { line: 11, explanation: `Quick Sort: So sánh mang[${j}]=${a[j]} với chốt=${chot}`, indices: [j, cuoi], type: 'compare', array: [...a], vars: { j, chot } };
+                    if (a[j] < chot) {
+                        i++;
+                        [a[i], a[j]] = [a[j], a[i]];
+                        yield { line: 11, explanation: `Quick Sort: Hoán đổi mang[${i}] và mang[${j}]`, indices: [i, j], type: 'swap', array: [...a], vars: { i, j } };
+                    }
+                }
+                [a[i + 1], a[cuoi]] = [a[cuoi], a[i + 1]];
+                let viTriChot = i + 1;
+                yield { line: 12, explanation: `Chốt chốt tại mang[${viTriChot}] = ${a[viTriChot]}`, indices: [viTriChot], type: 'sorted', array: [...a], vars: { viTriChot } };
+
+                yield* runIntro(dau, viTriChot - 1, doSau - 1);
+                yield* runIntro(viTriChot + 1, cuoi, doSau - 1);
+            }
+
+            yield* runIntro(0, soPhanTu - 1, doSauBanDau);
+            yield { line: 14, explanation: `Hoàn tất IntroSort!`, indices: a.map((_, i) => i), type: 'sorted', array: [...a], vars: {} };
+        }
+    },
+
+    // --------------------------------------------------------------------------
+    // 18. CYCLE SORT (Tối ưu số lần ghi vào RAM/Flash)
+    // --------------------------------------------------------------------------
+    cycle_sort: {
+        id: "cycle_sort",
+        name: "Cycle Sort (Sắp xếp chu trình - Tối ưu ghi)",
+        category: "Đặc biệt & Toán học",
+        complexity: {
+            best: "O(N²)",
+            avg: "O(N²)",
+            worst: "O(N²)",
+            space: "O(1)",
+            stable: "Không"
+        },
+        description: "Thuật toán tại chỗ độc đáo tối ưu hóa số lần ghi (Memory Writes) ít nhất về mặt lý thuyết: Mỗi phần tử chỉ bị ghi vào đúng vị trí đích cuối cùng đúng 1 lần. Rất quý giá cho chip nhớ Flash/EEPROM để chống hao mòn.",
+        logic: [
+            "1. Lặp qua từng vị trí dauChuTrinh từ 0 đến soPhanTu - 2.",
+            "2. Lấy phần tử giaTriHienTai = mang[dauChuTrinh].",
+            "3. Đếm số lượng phần tử nhỏ hơn giaTriHienTai trong mảng để xác định vị trí đích chính xác viTriDich.",
+            "4. Đưa giaTriHienTai vào mang[viTriDich] và lấy phần tử cũ tại đó ra tiếp tục chu trình.",
+            "5. Lặp lại việc tìm vị trí đích cho đến khi chu trình quay lại đúng dauChuTrinh ban đầu."
+        ],
+        pros: [
+            "Số lần ghi vào bộ nhớ là tối thiểu lý thuyết (tối đa N lần ghi).",
+            "Tiết kiệm tuổi thọ của ổ cứng SSD và chip nhớ Flash/EEPROM.",
+            "Hoàn toàn tại chỗ O(1) bộ nhớ phụ."
+        ],
+        cons: [
+            "Số phép so sánh lớn O(N²).",
+            "Không ổn định (Unstable)."
+        ],
+        code: [
+            "void cycleSort(vector<double>& mang, int soPhanTu) {",
+            "    for (int dau = 0; dau <= soPhanTu - 2; ++dau) {",
+            "        double phanTu = mang[dau];",
+            "        int viTri = dau;",
+            "        for (int i = dau + 1; i < soPhanTu; ++i)",
+            "            if (mang[i] < phanTu) viTri++;",
+            "        if (viTri == dau) continue;",
+            "        while (phanTu == mang[viTri]) viTri++;",
+            "        if (viTri != dau) swap(phanTu, mang[viTri]);",
+            "        while (viTri != dau) {",
+            "            viTri = dau;",
+            "            for (int i = dau + 1; i < soPhanTu; ++i)",
+            "                if (mang[i] < phanTu) viTri++;",
+            "            while (phanTu == mang[viTri]) viTri++;",
+            "            if (phanTu != mang[viTri]) swap(phanTu, mang[viTri]);",
+            "        }",
+            "    }",
+            "}"
+        ],
+        generator: function* (arr) {
+            let a = [...arr];
+            let n = a.length;
+
+            for (let dau = 0; dau <= n - 2; ++dau) {
+                let phanTu = a[dau];
+                let viTri = dau;
+                yield { line: 3, explanation: `Bắt đầu chu trình tại dau = ${dau}, xét giá trị = ${phanTu}`, indices: [dau], type: 'pivot', array: [...a], vars: { dau, phanTu } };
+
+                for (let i = dau + 1; i < n; ++i) {
+                    yield { line: 5, explanation: `Đếm số phần tử nhỏ hơn: so sánh mang[${i}]=${a[i]} với ${phanTu}`, indices: [i], type: 'compare', array: [...a], vars: { i, viTri, phanTu } };
+                    if (a[i] < phanTu) viTri++;
+                }
+
+                if (viTri === dau) {
+                    yield { line: 7, explanation: `Phần tử ${phanTu} đã ở đúng vị trí chốt`, indices: [dau], type: 'sorted', array: [...a], vars: { dau } };
+                    continue;
+                }
+
+                while (phanTu === a[viTri]) viTri++;
+
+                if (viTri !== dau) {
+                    let temp = a[viTri];
+                    a[viTri] = phanTu;
+                    phanTu = temp;
+                    yield { line: 9, explanation: `Ghi đè giá trị vào đúng vị trí đích viTri = ${viTri}`, indices: [viTri], type: 'swap', array: [...a], vars: { viTri, phanTuMoi: phanTu } };
+                }
+
+                while (viTri !== dau) {
+                    viTri = dau;
+                    for (let i = dau + 1; i < n; ++i) {
+                        if (a[i] < phanTu) viTri++;
+                    }
+                    while (phanTu === a[viTri]) viTri++;
+                    if (phanTu !== a[viTri]) {
+                        let temp = a[viTri];
+                        a[viTri] = phanTu;
+                        phanTu = temp;
+                        yield { line: 15, explanation: `Tiếp tục chu trình: Ghi vào mang[${viTri}] = ${a[viTri]}`, indices: [viTri], type: 'swap', array: [...a], vars: { viTri, phanTuMoi: phanTu } };
+                    }
+                }
+            }
+            yield { line: 17, explanation: `Hoàn tất Cycle Sort!`, indices: a.map((_, i) => i), type: 'sorted', array: [...a], vars: {} };
+        }
+    },
+
+    // --------------------------------------------------------------------------
+    // 19. PANCAKE SORT (Bài toán lật bánh kếp của Bill Gates)
+    // --------------------------------------------------------------------------
+    pancake_sort: {
+        id: "pancake_sort",
+        name: "Pancake Sort (Sắp xếp bánh kếp - Lật mảng)",
+        category: "Đặc biệt & Toán học",
+        complexity: {
+            best: "O(N)",
+            avg: "O(N²)",
+            worst: "O(N²)",
+            space: "O(1)",
+            stable: "Không"
+        },
+        description: "Thuật toán sắp xếp dựa trên bài toán nổi tiếng từng được Bill Gates nghiên cứu năm 1979: Bạn chỉ được phép dùng duy nhất thao tác lật ngược tiền tố (Prefix Flip) để sắp xếp mảng.",
+        logic: [
+            "1. Lặp kichThuoc từ soPhanTu giảm dần về 2.",
+            "2. Tìm vị trí của phần tử lớn nhất viTriMax trong đoạn mang[0 .. kichThuoc - 1].",
+            "3. Lật ngược đoạn [0 .. viTriMax] để đưa phần tử lớn nhất này lên đầu mảng (vị trí 0).",
+            "4. Lật ngược tiếp đoạn [0 .. kichThuoc - 1] để đưa phần tử lớn nhất đó về đúng đáy của vùng chưa xếp.",
+            "5. Giảm kichThuoc đi 1 và lặp lại cho đến hết."
+        ],
+        pros: [
+            "Ý tưởng toán học cực kỳ thanh lịch và cuốn hút.",
+            "Hữu ích trong các hệ thống phần cứng chỉ cho phép thao tác đảo chiều dòng dữ liệu (reversal).",
+            "Tại chỗ O(1) bộ nhớ."
+        ],
+        cons: [
+            "Thời gian chạy O(N²), số lần đảo mảng nhiều hơn so với các thuật toán so sánh trực tiếp."
+        ],
+        code: [
+            "void latMang(vector<double>& mang, int k) {",
+            "    int trai = 0, phai = k;",
+            "    while (trai < phai) swap(mang[trai++], mang[phai--]);",
+            "}",
+            "void pancakeSort(vector<double>& mang, int soPhanTu) {",
+            "    for (int kichThuoc = soPhanTu; kichThuoc > 1; --kichThuoc) {",
+            "        int viTriMax = timMax(mang, kichThuoc);",
+            "        if (viTriMax != kichThuoc - 1) {",
+            "            latMang(mang, viTriMax);     // Lật đưa Max lên đỉnh đầu",
+            "            latMang(mang, kichThuoc - 1); // Lật đưa Max về đúng đáy",
+            "        }",
+            "    }",
+            "}"
+        ],
+        generator: function* (arr) {
+            let a = [...arr];
+            let n = a.length;
+
+            function* lat(k) {
+                let l = 0, r = k;
+                while (l < r) {
+                    [a[l], a[r]] = [a[r], a[l]];
+                    l++; r--;
+                }
+                yield { line: 3, explanation: `Thực hiện LẬT NGƯỢC (Flip) đoạn tiền tố [0 .. ${k}]`, indices: Array.from({ length: k + 1 }, (_, i) => i), type: 'swap', array: [...a], vars: { phamViLat: k } };
+            }
+
+            for (let kichThuoc = n; kichThuoc > 1; --kichThuoc) {
+                let viTriMax = 0;
+                yield { line: 6, explanation: `Tìm phần tử lớn nhất trong đoạn chưa xếp [0 .. ${kichThuoc - 1}]`, indices: [kichThuoc - 1], type: 'info', array: [...a], vars: { kichThuoc } };
+
+                for (let i = 1; i < kichThuoc; ++i) {
+                    yield { line: 7, explanation: `So sánh tìm Max: mang[${i}]=${a[i]} với mang[${viTriMax}]=${a[viTriMax]}`, indices: [i, viTriMax], type: 'compare', array: [...a], vars: { i, viTriMax } };
+                    if (a[i] > a[viTriMax]) viTriMax = i;
+                }
+
+                if (viTriMax !== kichThuoc - 1) {
+                    yield { line: 9, explanation: `Tìm thấy Max = ${a[viTriMax]} tại vị trí ${viTriMax}. Lật tiền tố [0 .. ${viTriMax}] để đưa lên đỉnh`, indices: [viTriMax], type: 'pivot', array: [...a], vars: { viTriMax, giaTriMax: a[viTriMax] } };
+                    yield* lat(viTriMax);
+
+                    yield { line: 10, explanation: `Đã đưa Max lên đầu. Giờ lật cả đoạn [0 .. ${kichThuoc - 1}] để đưa Max về đáy`, indices: [kichThuoc - 1], type: 'info', array: [...a], vars: { kichThuoc } };
+                    yield* lat(kichThuoc - 1);
+                }
+
+                yield { line: 11, explanation: `Phần tử mang[${kichThuoc - 1}] = ${a[kichThuoc - 1]} đã chốt vị trí đáy`, indices: [kichThuoc - 1], type: 'sorted', array: [...a], vars: { chotDay: kichThuoc - 1 } };
+            }
+
+            yield { line: 13, explanation: `Hoàn tất Pancake Sort!`, indices: a.map((_, i) => i), type: 'sorted', array: [...a], vars: {} };
+        }
+    },
+
+    // --------------------------------------------------------------------------
+    // 20. BITONIC SORT (Song song trên GPU)
+    // --------------------------------------------------------------------------
+    bitonic_sort: {
+        id: "bitonic_sort",
+        name: "Bitonic Sort (Sắp xếp Bitonic song song)",
+        category: "Mạng lưới so sánh",
+        complexity: {
+            best: "O(log² N) [Song song]",
+            avg: "O(N log² N)",
+            worst: "O(N log² N)",
+            space: "O(N log² N)",
+            stable: "Không"
+        },
+        description: "Thuật toán sắp xếp kinh điển cho tính toán song song trên GPU và mạch phần cứng so sánh. Xây dựng chuỗi Bitonic (nửa đầu tăng dần, nửa sau giảm dần) rồi tiến hành hợp nhất song song.",
+        logic: [
+            "1. Dãy Bitonic là dãy tăng dần rồi giảm dần (hoặc xoay vòng).",
+            "2. Đệ quy xây dựng 2 nửa: nửa đầu sắp xếp tăng dần, nửa sau sắp xếp giảm dần để tạo dãy Bitonic.",
+            "3. Hợp nhất Bitonic: So sánh và hoán đổi các cặp cách nhau khoảng cách k = dem/2.",
+            "4. Đệ quy tiếp tục gộp các nửa nhỏ hơn cho đến khi toàn bộ thành dãy tăng dần."
+        ],
+        pros: [
+            "Hoàn hảo cho tính toán song song trên Card màn hình GPU (CUDA, OpenCL).",
+            "Không có rẽ nhánh điều kiện phức tạp, thời gian chạy cực kỳ ổn định và đồng bộ."
+        ],
+        cons: [
+            "Hiệu quả nhất khi số phần tử là lũy thừa của 2 (2, 4, 8, 16, 32...).",
+            "Trên CPU đơn luồng thông thường thì chậm hơn Quick Sort."
+        ],
+        code: [
+            "void hopNhatBitonic(vector<double>& mang, int batDau, int dem, bool tangDan) {",
+            "    if (dem > 1) {",
+            "        int k = dem / 2;",
+            "        for (int i = batDau; i < batDau + k; ++i) {",
+            "            if (tangDan == (mang[i] > mang[i + k]))",
+            "                swap(mang[i], mang[i + k]);",
+            "        }",
+            "        hopNhatBitonic(mang, batDau, k, tangDan);",
+            "        hopNhatBitonic(mang, batDau + k, k, tangDan);",
+            "    }",
+            "}"
+        ],
+        generator: function* (arr) {
+            let a = [...arr];
+            let n = a.length;
+
+            function* hopNhat(batDau, dem, tangDan) {
+                if (dem > 1) {
+                    let k = Math.floor(dem / 2);
+                    yield { line: 3, explanation: `Bitonic Merge đoạn [${batDau} .. ${batDau + dem - 1}] với khoảng cách k = ${k}`, indices: [batDau, batDau + k], type: 'info', array: [...a], vars: { batDau, dem, k, huong: tangDan ? "Tăng" : "Giảm" } };
+
+                    for (let i = batDau; i < batDau + k; ++i) {
+                        yield { line: 5, explanation: `Mạng so sánh song song: mang[${i}]=${a[i]} và mang[${i + k}]=${a[i + k]}`, indices: [i, i + k], type: 'compare', array: [...a], vars: { i, iK: i + k } };
+                        if (tangDan === (a[i] > a[i + k])) {
+                            [a[i], a[i + k]] = [a[i + k], a[i]];
+                            yield { line: 6, explanation: `Hoán đổi phần tử theo hướng ${tangDan ? "Tăng dần" : "Giảm dần"}`, indices: [i, i + k], type: 'swap', array: [...a], vars: { i, iK: i + k } };
+                        }
+                    }
+                    yield* hopNhat(batDau, k, tangDan);
+                    yield* hopNhat(batDau + k, k, tangDan);
+                }
+            }
+
+            function* sapXepBitonic(batDau, dem, tangDan) {
+                if (dem > 1) {
+                    let k = Math.floor(dem / 2);
+                    yield* sapXepBitonic(batDau, k, true);
+                    yield* sapXepBitonic(batDau + k, k, false);
+                    yield* hopNhat(batDau, dem, tangDan);
+                }
+            }
+
+            yield* sapXepBitonic(0, n, true);
+            yield { line: 11, explanation: `Hoàn tất Bitonic Sort!`, indices: a.map((_, i) => i), type: 'sorted', array: [...a], vars: {} };
+        }
+    },
+
+    // --------------------------------------------------------------------------
+    // 21. ODD-EVEN SORT (Sắp xếp chẵn lẻ / Brick Sort)
+    // --------------------------------------------------------------------------
+    odd_even_sort: {
+        id: "odd_even_sort",
+        name: "Odd-Even Sort (Sắp xếp chẵn lẻ / Brick Sort)",
+        category: "Đổi chỗ & Nổi bọt",
+        complexity: {
+            best: "O(N)",
+            avg: "O(N²)",
+            worst: "O(N²)",
+            space: "O(1)",
+            stable: "Có"
+        },
+        description: "Biến thể song song của Bubble Sort, còn được gọi là Brick Sort. Thuật toán hoạt động qua 2 pha luân phiên: Pha Lẻ (so sánh các cặp chỉ số lẻ 1-2, 3-4...) và Pha Chẵn (so sánh các cặp chỉ số chẵn 0-1, 2-3...).",
+        logic: [
+            "1. Lặp lại 2 pha cho đến khi không còn phần tử nào bị hoán đổi (daHoanDoi == false).",
+            "2. Pha Lẻ: So sánh và hoán đổi mang[i] với mang[i + 1] cho mọi i = 1, 3, 5...",
+            "3. Pha Chẵn: So sánh và hoán đổi mang[i] với mang[i + 1] cho mọi i = 0, 2, 4...",
+            "4. Hai pha này có thể thực thi song song hoàn toàn trong phần cứng."
+        ],
+        pros: [
+            "Rất dễ thiết kế thành mạch phần cứng xử lý song song.",
+            "Ổn định và in-place O(1)."
+        ],
+        cons: [
+            "Chạy tuần tự trên CPU đơn nhân vẫn là O(N²)."
+        ],
+        code: [
+            "void oddEvenSort(vector<double>& mang, int soPhanTu) {",
+            "    bool daHoanDoi = false;",
+            "    while (!daHoanDoi) {",
+            "        daHoanDoi = true;",
+            "        // Pha Lẻ (Odd phase)",
+            "        for (int i = 1; i <= soPhanTu - 2; i += 2)",
+            "            if (mang[i] > mang[i + 1]) { swap(mang[i], mang[i + 1]); daHoanDoi = false; }",
+            "        // Pha Chẵn (Even phase)",
+            "        for (int i = 0; i <= soPhanTu - 2; i += 2)",
+            "            if (mang[i] > mang[i + 1]) { swap(mang[i], mang[i + 1]); daHoanDoi = false; }",
+            "    }",
+            "}"
+        ],
+        generator: function* (arr) {
+            let a = [...arr];
+            let n = a.length;
+            let daSapXep = false;
+
+            while (!daSapXep) {
+                daSapXep = true;
+
+                // Pha Lẻ
+                yield { line: 5, explanation: `Bắt đầu PHA LẺ (Odd Phase): Kiểm tra các cặp chỉ số (1-2, 3-4, 5-6...)`, indices: [], type: 'info', array: [...a], vars: { pha: "Lẻ (Odd)" } };
+                for (let i = 1; i <= n - 2; i += 2) {
+                    yield { line: 7, explanation: `Pha Lẻ: So sánh mang[${i}]=${a[i]} và mang[${i + 1}]=${a[i + 1]}`, indices: [i, i + 1], type: 'compare', array: [...a], vars: { i, cap: `${i}-${i + 1}` } };
+                    if (a[i] > a[i + 1]) {
+                        [a[i], a[i + 1]] = [a[i + 1], a[i]];
+                        daSapXep = false;
+                        yield { line: 7, explanation: `Hoán đổi cặp lẻ mang[${i}] và mang[${i + 1}]`, indices: [i, i + 1], type: 'swap', array: [...a], vars: { i } };
+                    }
+                }
+
+                // Pha Chẵn
+                yield { line: 9, explanation: `Bắt đầu PHA CHẴN (Even Phase): Kiểm tra các cặp chỉ số (0-1, 2-3, 4-5...)`, indices: [], type: 'info', array: [...a], vars: { pha: "Chẵn (Even)" } };
+                for (let i = 0; i <= n - 2; i += 2) {
+                    yield { line: 10, explanation: `Pha Chẵn: So sánh mang[${i}]=${a[i]} và mang[${i + 1}]=${a[i + 1]}`, indices: [i, i + 1], type: 'compare', array: [...a], vars: { i, cap: `${i}-${i + 1}` } };
+                    if (a[i] > a[i + 1]) {
+                        [a[i], a[i + 1]] = [a[i + 1], a[i]];
+                        daSapXep = false;
+                        yield { line: 10, explanation: `Hoán đổi cặp chẵn mang[${i}] và mang[${i + 1}]`, indices: [i, i + 1], type: 'swap', array: [...a], vars: { i } };
+                    }
+                }
+            }
+
+            yield { line: 12, explanation: `Hoàn tất Odd-Even Sort!`, indices: a.map((_, i) => i), type: 'sorted', array: [...a], vars: {} };
+        }
+    },
+
+    // --------------------------------------------------------------------------
+    // 22. STOOGE SORT (Đệ quy 2/3 giáo dục kinh điển)
+    // --------------------------------------------------------------------------
+    stooge_sort: {
+        id: "stooge_sort",
+        name: "Stooge Sort (Sắp xếp Stooge đệ quy 2/3)",
+        category: "Giáo dục",
+        complexity: {
+            best: "O(N^2.71)",
+            avg: "O(N^2.71)",
+            worst: "O(N^2.71)",
+            space: "O(log N)",
+            stable: "Không"
+        },
+        description: "Thuật toán đệ quy hài hước nhưng là ví dụ kinh điển trong các bài giảng khoa học máy tính về phân tích độ phức tạp thuật toán bằng định lý Master Theorem. Chia làm 3 phần, sắp xếp 2/3 đầu, 2/3 cuối rồi lại 2/3 đầu.",
+        logic: [
+            "1. Nếu phần tử đầu mang[dau] > phần tử cuối mang[cuoi], hoán đổi chúng.",
+            "2. Nếu độ dài đoạn >= 3:",
+            "   - Tính t = (cuoi - dau + 1) / 3.",
+            "   - Đệ quy sắp xếp 2/3 đầu: [dau .. cuoi - t].",
+            "   - Đệ quy sắp xếp 2/3 cuối: [dau + t .. cuoi].",
+            "   - Đệ quy sắp xếp lại 2/3 đầu: [dau .. cuoi - t] một lần nữa."
+        ],
+        pros: [
+            "Ý tưởng đệ quy đối xứng độc nhất vô nhị.",
+            "Rất có giá trị giảng dạy khi học về định lý Master Theorem (T(n) = 3T(2n/3) + O(1))."
+        ],
+        cons: [
+            "Cực kỳ chậm, độ phức tạp O(N^(log(3)/log(1.5))) ≈ O(N^2.71), chậm hơn cả Bubble Sort!"
+        ],
+        code: [
+            "void stoogeSort(vector<double>& mang, int dau, int cuoi) {",
+            "    if (mang[dau] > mang[cuoi]) swap(mang[dau], mang[cuoi]);",
+            "    if (cuoi - dau + 1 > 2) {",
+            "        int t = (cuoi - dau + 1) / 3;",
+            "        stoogeSort(mang, dau, cuoi - t);     // 2/3 đầu",
+            "        stoogeSort(mang, dau + t, cuoi);     // 2/3 cuối",
+            "        stoogeSort(mang, dau, cuoi - t);     // 2/3 đầu",
+            "    }",
+            "}"
+        ],
+        generator: function* (arr) {
+            let a = [...arr];
+
+            function* stooge(dau, cuoi) {
+                yield { line: 2, explanation: `So sánh hai đầu mút mang[${dau}]=${a[dau]} và mang[${cuoi}]=${a[cuoi]}`, indices: [dau, cuoi], type: 'compare', array: [...a], vars: { dau, cuoi } };
+                if (a[dau] > a[cuoi]) {
+                    [a[dau], a[cuoi]] = [a[cuoi], a[dau]];
+                    yield { line: 2, explanation: `Hoán đổi 2 đầu mút mang[${dau}] và mang[${cuoi}]`, indices: [dau, cuoi], type: 'swap', array: [...a], vars: { dau, cuoi } };
+                }
+
+                if (cuoi - dau + 1 > 2) {
+                    let t = Math.floor((cuoi - dau + 1) / 3);
+                    yield { line: 4, explanation: `Chia đoạn làm 3 phần, bước nhảy t = ${t}. Đệ quy 2/3 đầu [${dau} .. ${cuoi - t}]`, indices: [dau, cuoi - t], type: 'info', array: [...a], vars: { dau, cuoi, t } };
+                    yield* stooge(dau, cuoi - t);
+
+                    yield { line: 6, explanation: `Đệ quy 2/3 cuối [${dau + t} .. ${cuoi}]`, indices: [dau + t, cuoi], type: 'info', array: [...a], vars: { dau, cuoi, t } };
+                    yield* stooge(dau + t, cuoi);
+
+                    yield { line: 7, explanation: `Đệ quy lại 2/3 đầu [${dau} .. ${cuoi - t}] để bảo đảm thứ tự`, indices: [dau, cuoi - t], type: 'info', array: [...a], vars: { dau, cuoi, t } };
+                    yield* stooge(dau, cuoi - t);
+                }
+            }
+
+            yield* stooge(0, a.length - 1);
+            yield { line: 9, explanation: `Hoàn tất Stooge Sort!`, indices: a.map((_, i) => i), type: 'sorted', array: [...a], vars: {} };
+        }
     }
 };

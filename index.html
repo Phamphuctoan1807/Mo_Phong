@@ -31,7 +31,7 @@
                 <span>🎯</span> Mô phỏng
             </button>
             <button class="nav-tab-btn" data-tab="tab-encyclopedia">
-                <span>📚</span> Thuật toán (15)
+                <span>📚</span> Thuật toán (22)
             </button>
         </nav>
 
@@ -82,8 +82,12 @@
                         <div class="algo-select-wrapper">
                             <label for="algoSelect">Thuật toán sắp xếp:</label>
                             <select id="algoSelect" class="algo-select">
+                                <optgroup label="👑 Thuật toán lai công nghiệp (Hybrid)">
+                                    <option value="tim_sort">TimSort (Chuẩn Python & Java)</option>
+                                    <option value="intro_sort">IntroSort (Chuẩn C++ std::sort)</option>
+                                </optgroup>
                                 <optgroup label="Chia để trị & Cây nhị phân">
-                                    <option value="quick_sort">Quick Sort (Sắp xếp nhanh)</option>
+                                    <option value="quick_sort" selected>Quick Sort (Sắp xếp nhanh)</option>
                                     <option value="merge_sort">Merge Sort (Sắp xếp trộn)</option>
                                     <option value="heap_sort">Heap Sort (Sắp xếp vun đống)</option>
                                 </optgroup>
@@ -96,13 +100,20 @@
                                     <option value="cocktail_sort">Cocktail Shaker Sort (Nổi bọt 2 chiều)</option>
                                     <option value="comb_sort">Comb Sort (Sắp xếp lược)</option>
                                     <option value="gnome_sort">Gnome Sort (Chú lùn vườn)</option>
+                                    <option value="odd_even_sort">Odd-Even Sort (Sắp xếp chẵn lẻ)</option>
                                 </optgroup>
                                 <optgroup label="Phân phối & Không so sánh">
                                     <option value="bucket_sort">Bucket Sort (Theo thùng - Tốt cho số thực)</option>
                                     <option value="counting_sort">Counting Sort (Sắp xếp đếm)</option>
                                     <option value="radix_sort">Radix Sort (Sắp xếp cơ số LSD)</option>
                                 </optgroup>
-                                <optgroup label="Thú vị / Giáo dục">
+                                <optgroup label="Đặc biệt, Toán học & Song song">
+                                    <option value="cycle_sort">Cycle Sort (Tối ưu ghi nhớ Flash)</option>
+                                    <option value="pancake_sort">Pancake Sort (Lật mảng bánh kếp)</option>
+                                    <option value="bitonic_sort">Bitonic Sort (Song song GPU)</option>
+                                </optgroup>
+                                <optgroup label="Giáo dục & Thú vị">
+                                    <option value="stooge_sort">Stooge Sort (Đệ quy 2/3)</option>
                                     <option value="bogo_sort">Bogo Sort (Ngẫu nhiên - Giáo dục)</option>
                                 </optgroup>
                             </select>
@@ -221,11 +232,14 @@
 
                 <!-- Category Filters -->
                 <div class="category-filters" id="categoryFilters">
-                    <button class="cat-filter-btn active" data-cat="all">Tất cả (15)</button>
+                    <button class="cat-filter-btn active" data-cat="all">Tất cả (22)</button>
+                    <button class="cat-filter-btn" data-cat="Thuật toán lai (Hybrid)">Thuật toán lai (Hybrid)</button>
                     <button class="cat-filter-btn" data-cat="Chia để trị & Cây">Chia để trị & Cây</button>
                     <button class="cat-filter-btn" data-cat="Chèn & Chọn">Chèn & Chọn</button>
                     <button class="cat-filter-btn" data-cat="Đổi chỗ & Nổi bọt">Đổi chỗ & Nổi bọt</button>
                     <button class="cat-filter-btn" data-cat="Phi so sánh & Thùng">Phi so sánh & Thùng</button>
+                    <button class="cat-filter-btn" data-cat="Đặc biệt & Toán học">Đặc biệt & Toán học</button>
+                    <button class="cat-filter-btn" data-cat="Mạng lưới so sánh">Song song GPU</button>
                     <button class="cat-filter-btn" data-cat="Giáo dục">Giáo dục</button>
                 </div>
             </div>

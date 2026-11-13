@@ -1,6 +1,6 @@
-# 🚀 Sorting Algorithm Studio (GitHub Pages Ready)
+# 🚀 Sorting Algorithm Studio (22 Thuật Toán - GitHub Pages Ready)
 
-Một ứng dụng trực quan hóa và bách khoa toàn thư toàn diện về **15 thuật toán sắp xếp kinh điển**, được thiết kế tối ưu để chạy trực tiếp trên **GitHub Pages** không cần build tool hay cài đặt phức tạp.
+Một ứng dụng trực quan hóa và bách khoa toàn thư toàn diện về **22 thuật toán sắp xếp kinh điển & công nghiệp**, được thiết kế tối ưu để chạy trực tiếp trên **GitHub Pages** không cần build tool hay cài đặt phức tạp.
 
 ---
 
@@ -9,12 +9,12 @@ Một ứng dụng trực quan hóa và bách khoa toàn thư toàn diện về 
 1. **Tab "🎯 Mô phỏng" (Simulation Studio):**
    - **Đầu vào tùy biến hoàn toàn:** Cho phép nhập dãy số bất kỳ, hỗ trợ **số âm**, **số thực (thập phân)** và **không giới hạn số lượng phần tử**.
    - **Trục tọa độ số 0 (Zero-Axis Baseline):** Biểu diễn các số âm quay xuống dưới (tone màu đỏ cam) và số dương vươn lên trên (tone màu xanh dương/cyan) cực kỳ trực quan.
-   - **Mô phỏng mã nguồn đồng bộ từng dòng (C++):** Dòng code đang chạy sẽ được tô sáng (highlight), kèm hộp thoại diễn giải chi tiết logic tại bước đó (ví dụ: đang so sánh `a[i]` với `pivot`, đang hoán đổi, hay chốt vị trí).
-   - **Theo dõi biến thời gian thực (Variable Watcher):** Hiển thị giá trị tức thời của các biến như `i`, `j`, `pivot`, `key`, `mid`, `gap`...
+   - **Mô phỏng mã nguồn C++ Việt hóa đồng bộ từng dòng:** Dòng code đang chạy sẽ được tô sáng (highlight), các biến số đặt tên bằng Tiếng Việt (`chot`, `dau`, `cuoi`, `trai`, `phai`, `giaTriChen`, `doSauToiDa`...), kèm hộp thoại diễn giải chi tiết logic tại bước đó.
+   - **Theo dõi biến thời gian thực (Variable Watcher):** Hiển thị giá trị tức thời của các biến.
    - **Bộ điều khiển linh hoạt:** Chạy tự động (Play), Tạm dừng (Pause), Chạy từng bước (Step), Đặt lại (Reset) và thanh trượt tùy chỉnh tốc độ.
 
-2. **Tab "📚 Thuật toán" (15 Algorithms Encyclopedia):**
-   - Giới thiệu chi tiết 15 thuật toán:
+2. **Tab "📚 Thuật toán" (Bách khoa toàn thư 22 thuật toán):**
+   - Giới thiệu chi tiết 22 thuật toán:
      1. **Quick Sort** (Sắp xếp nhanh)
      2. **Merge Sort** (Sắp xếp trộn)
      3. **Heap Sort** (Sắp xếp vun đống)
@@ -26,10 +26,17 @@ Một ứng dụng trực quan hóa và bách khoa toàn thư toàn diện về 
      9. **Cocktail Shaker Sort** (Nổi bọt 2 chiều)
      10. **Gnome Sort** (Sắp xếp chú lùn)
      11. **Comb Sort** (Sắp xếp lược)
-     12. **Bucket Sort** (Sắp xếp theo thùng - Rất tốt cho số thực)
+     12. **Bucket Sort** (Sắp xếp theo thùng)
      13. **Counting Sort** (Sắp xếp đếm tuyến tính O(N+K))
      14. **Radix Sort** (Sắp xếp cơ số LSD)
      15. **Bogo Sort** (Sắp xếp ngẫu nhiên - Giáo dục)
+     16. **TimSort** (Chuẩn công nghiệp Python & Java - Thuật toán lai)
+     17. **IntroSort** (Chuẩn C++ std::sort - Thuật toán nội quan)
+     18. **Cycle Sort** (Sắp xếp chu trình - Tối ưu số lần ghi vào RAM/Flash)
+     19. **Pancake Sort** (Sắp xếp bánh kếp - Bài toán lật mảng của Bill Gates)
+     20. **Bitonic Sort** (Sắp xếp song song trên GPU & Card đồ họa)
+     21. **Odd-Even Sort** (Sắp xếp chẵn lẻ / Brick Sort)
+     22. **Stooge Sort** (Sắp xếp đệ quy 2/3 giáo dục kinh điển)
    - Mỗi thuật toán gồm:
      - Bảng độ phức tạp thời gian (Tốt nhất, Trung bình, Xấu nhất), không gian bộ nhớ, tính ổn định (Stable).
      - Chi tiết từng bước logic hoạt động.

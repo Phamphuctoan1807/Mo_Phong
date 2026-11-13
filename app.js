@@ -249,7 +249,26 @@ document.addEventListener("DOMContentLoaded", () => {
         khoangDem: "khoảng_đếm",
         hangChuSo: "hàng_số",
         doLechAm: "độ_lệch_âm",
-        soLuotThu: "lượt_thử"
+        soLuotThu: "lượt_thử",
+        coRun: "cỡ_run",
+        coRunHienTai: "cỡ_run_hiện_tại",
+        dauRun: "đầu_run",
+        cuoiRun: "cuối_run",
+        doSau: "độ_sâu_còn",
+        doSauToiDa: "độ_sâu_tối_đa",
+        cheDo: "chế_độ_chạy",
+        phanTu: "phần_tử",
+        phanTuMoi: "phần_tử_mới",
+        phamViLat: "phạm_vi_lật",
+        giaTriMax: "giá_trị_max",
+        viTriMax: "vị_trí_max",
+        chotDay: "chốt_đáy",
+        huong: "hướng",
+        batDau: "bắt_đầu",
+        dem: "số_lượng",
+        pha: "pha_chạy",
+        cap: "cặp_so_sánh",
+        t: "bước_nhảy_t"
     };
 
     function updateVariableWatcher(varsObj) {
