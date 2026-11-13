@@ -290,8 +290,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // --------------------------------------------------------------------------
     // 4. SIMULATION STEP CONTROLLER
     // --------------------------------------------------------------------------
-    function resetSimulation() {
-        pauseSimulation();
+    function resetSimulation(shouldPause = true) {
+        if (shouldPause) {
+            pauseSimulation();
+        }
         initialArray = parseInputArray();
         currentArray = [...initialArray];
         currentAlgoId = algoSelect.value;
@@ -317,7 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function stepSimulation() {
         if (!generatorInstance) {
-            resetSimulation();
+            resetSimulation(false);
         }
 
         const nextStep = generatorInstance.next();
@@ -326,6 +328,7 @@ document.addEventListener("DOMContentLoaded", () => {
             highlightCodeLine(null);
             explanationText.innerHTML = `🎉 <strong>Hoàn thành!</strong> Dãy số đã được sắp xếp tăng dần chính xác.`;
             renderBars(currentArray, currentArray.map((_, i) => i), "sorted");
+            generatorInstance = null; // Đánh dấu đã xong để lượt chạy tiếp theo tự reset mới
             return false;
         }
 
@@ -364,6 +367,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function playSimulation() {
+        if (!generatorInstance) {
+            resetSimulation(false);
+        }
         if (isPlaying) return;
         isPlaying = true;
         playIcon.textContent = "⏸";

@@ -916,7 +916,8 @@ const ALGORITHMS = {
             let maxScaled = Math.round(giaTriLonNhat * tiLe);
             let khoangDem = maxScaled - minScaled + 1;
 
-            let mangDem = new Array(Math.min(khoangDem, 500)).fill(0);
+            // Đảm bảo mảng đếm đủ lớn để bao quát khoảng giá trị mà không bị tràn hay cắt cụt
+            let mangDem = new Array(Math.min(khoangDem, 50000)).fill(0);
             yield { line: 2, explanation: `Tìm min = ${giaTriNhoNhat}, max = ${giaTriLonNhat}. Khoảng đếm = ${khoangDem}`, indices: [], type: 'info', array: [...a], vars: { giaTriNhoNhat, giaTriLonNhat, khoangDem } };
 
             for (let i = 0; i < a.length; ++i) {
@@ -1342,12 +1343,13 @@ const ALGORITHMS = {
                             j--;
                         }
                         a[j + 1] = key;
+                        yield { line: 4, explanation: `Insertion Sort: Chèn ${key} vào vị trí mang[${j + 1}]`, indices: [j + 1], type: 'sorted', array: [...a], vars: { viTri: j + 1, key } };
                     }
                     return;
                 }
 
-                // Nếu hết độ sâu cho phép
-                if (doSau === 0) {
+                // Nếu hết độ sâu cho phép (doSau <= 0)
+                if (doSau <= 0) {
                     yield { line: 7, explanation: `Độ sâu đệ quy chạm giới hạn 0: Tự động chuyển sang Heap Sort để chặn O(N²)`, indices: [dau, cuoi], type: 'pivot', array: [...a], vars: { cheDo: "Heap Sort (Bảo vệ)", dau, cuoi } };
                     // Sắp xếp heap cục bộ
                     let sub = a.slice(dau, cuoi + 1);
@@ -1608,17 +1610,32 @@ const ALGORITHMS = {
         generator: function* (arr) {
             let a = [...arr];
             let n = a.length;
+            if (n <= 1) {
+                yield { line: 1, explanation: `Mảng chỉ có <= 1 phần tử`, indices: [0], type: 'sorted', array: [...a], vars: {} };
+                return;
+            }
+
+            // Tìm lũy thừa của 2 gần nhất >= n để mạng Bitonic hoạt động chuẩn
+            let p = 1;
+            while (p < n) p *= 2;
+            let maxVal = Math.max(...a);
+            let padVal = Math.abs(maxVal) + 10000;
+            let padded = [...a];
+            while (padded.length < p) padded.push(padVal);
 
             function* hopNhat(batDau, dem, tangDan) {
                 if (dem > 1) {
                     let k = Math.floor(dem / 2);
-                    yield { line: 3, explanation: `Bitonic Merge đoạn [${batDau} .. ${batDau + dem - 1}] với khoảng cách k = ${k}`, indices: [batDau, batDau + k], type: 'info', array: [...a], vars: { batDau, dem, k, huong: tangDan ? "Tăng" : "Giảm" } };
-
                     for (let i = batDau; i < batDau + k; ++i) {
-                        yield { line: 5, explanation: `Mạng so sánh song song: mang[${i}]=${a[i]} và mang[${i + k}]=${a[i + k]}`, indices: [i, i + k], type: 'compare', array: [...a], vars: { i, iK: i + k } };
-                        if (tangDan === (a[i] > a[i + k])) {
-                            [a[i], a[i + k]] = [a[i + k], a[i]];
-                            yield { line: 6, explanation: `Hoán đổi phần tử theo hướng ${tangDan ? "Tăng dần" : "Giảm dần"}`, indices: [i, i + k], type: 'swap', array: [...a], vars: { i, iK: i + k } };
+                        let valid = i < n && (i + k) < n;
+                        if (valid) {
+                            yield { line: 5, explanation: `Mạng so sánh song song: mang[${i}]=${padded[i]} và mang[${i + k}]=${padded[i + k]}`, indices: [i, i + k], type: 'compare', array: padded.slice(0, n), vars: { i, iK: i + k } };
+                        }
+                        if (tangDan === (padded[i] > padded[i + k])) {
+                            [padded[i], padded[i + k]] = [padded[i + k], padded[i]];
+                            if (valid) {
+                                yield { line: 6, explanation: `Hoán đổi phần tử theo hướng ${tangDan ? "Tăng dần" : "Giảm dần"}`, indices: [i, i + k], type: 'swap', array: padded.slice(0, n), vars: { i, iK: i + k } };
+                            }
                         }
                     }
                     yield* hopNhat(batDau, k, tangDan);
@@ -1635,7 +1652,8 @@ const ALGORITHMS = {
                 }
             }
 
-            yield* sapXepBitonic(0, n, true);
+            yield* sapXepBitonic(0, p, true);
+            a = padded.slice(0, n);
             yield { line: 11, explanation: `Hoàn tất Bitonic Sort!`, indices: a.map((_, i) => i), type: 'sorted', array: [...a], vars: {} };
         }
     },
